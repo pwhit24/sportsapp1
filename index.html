@@ -1877,7 +1877,6 @@ function CommunityPicksComponent() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [recordRange, setRecordRange] = useState('daily');
 
-  // Logic to calculate the start date for the record dashboard
   const getRangeStartDate = () => {
     const start = new Date(selectedDate + "T00:00:00");
     if (recordRange === 'weekly') {
@@ -1895,7 +1894,6 @@ function CommunityPicksComponent() {
     setLoading(true);
     try {
       const startDate = getRangeStartDate();
-      // Fetch picks from the start of the range up to the selected day
       const snapshot = await db.collection("communityPicks")
         .where("date", ">=", startDate)
         .where("date", "<=", selectedDate + "\uf8ff")
@@ -1906,8 +1904,7 @@ function CommunityPicksComponent() {
         ...doc.data() 
       }));
       
-      // Newest picks first
-      data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      data.sort((a, b) => new Date(b.fullTimestamp || b.date) - new Date(a.fullTimestamp || a.date));
       setPicks(data);
     } catch (err) {
       console.error("Load error:", err);
@@ -1920,34 +1917,38 @@ function CommunityPicksComponent() {
     loadPicks();
   }, [selectedDate, recordRange]);
 
-  // --- 👑 FIXED ADMIN GRADING FUNCTION ---
-  const markResult = async (id, result) => {
-    // 1. Check if user is actually admin
-    if (!isAdmin()) {
-      alert("You do not have permission to grade picks.");
-      return;
-    }
+  // --- 🗑️ DELETE FUNCTION (ADMIN OR OWNER) ---
+  const deletePick = async (pickId, pickUserId) => {
+    const isOwner = user && user.uid === pickUserId;
+    if (!isAdmin() && !isOwner) return;
 
+    if (window.confirm("Are you sure you want to delete this pick?")) {
+      try {
+        await db.collection("communityPicks").doc(pickId).delete();
+        // Update local state to remove the pick immediately
+        setPicks(prev => prev.filter(p => p.id !== pickId));
+      } catch (err) {
+        console.error("Delete error:", err);
+        alert("Failed to delete pick.");
+      }
+    }
+  };
+
+  const markResult = async (id, result) => {
+    if (!isAdmin()) return;
     try {
-      // 2. Directly update the specific document in Firestore
       await db.collection("communityPicks").doc(id).update({
         result: result,
         gradedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-
-      // 3. Update local state immediately so the UI reflects the change
       setPicks(prevPicks => prevPicks.map(p => 
         p.id === id ? { ...p, result: result } : p
       ));
-      
-      console.log(`Successfully marked ${id} as ${result}`);
     } catch (err) {
       console.error("Grading error:", err);
-      alert("Failed to update pick. Check console for details.");
     }
   };
 
-  // Stats Calculation for Dashboard
   const stats = picks.reduce((acc, p) => {
     if (p.result === 'win') acc.w++;
     if (p.result === 'loss') acc.l++;
@@ -1963,7 +1964,7 @@ function CommunityPicksComponent() {
       
       {/* 📈 RECORD DASHBOARD */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="md:col-span-3 glass-panelp-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="md:col-span-3 glass-panel p-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
           <div>
             <h2 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-1">
               Community {recordRange} Record
@@ -1980,7 +1981,7 @@ function CommunityPicksComponent() {
                 key={range}
                 onClick={() => setRecordRange(range)}
                 className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
-                  recordRange === range ? 'glass-paneltext-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  recordRange === range ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
                 {range}
@@ -1989,7 +1990,7 @@ function CommunityPicksComponent() {
           </div>
         </div>
 
-        <div className="bg-indigo-600 p-6 rounded-3xl shadow-lg text-glass-panel flex flex-col justify-center items-center text-center">
+        <div className="bg-indigo-600 p-6 rounded-3xl shadow-lg text-white flex flex-col justify-center items-center text-center">
           <div className="text-[10px] font-bold uppercase opacity-80 leading-tight mb-1">Total Graded<br/>Community Plays</div>
           <div className="text-3xl font-black">{stats.w + stats.l}</div>
         </div>
@@ -2002,20 +2003,20 @@ function CommunityPicksComponent() {
               const d = new Date(selectedDate + "T00:00:00");
               d.setDate(d.getDate() - 1);
               setSelectedDate(d.toISOString().split('T')[0]);
-           }} className="w-10 h-10 flex items-center justify-center glass-panel border rounded-xl hover:bg-white/5 font-bold">←</button>
+           }} className="w-10 h-10 flex items-center justify-center border rounded-xl hover:bg-gray-50 font-bold transition-colors">←</button>
            
            <input 
               type="date" 
               value={selectedDate} 
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="glass-panelborder-none rounded-xl font-bold glass-panel px-4 py-2 focus:ring-0 cursor-pointer"
+              className="border-none rounded-xl font-bold px-4 py-2 focus:ring-0 cursor-pointer bg-transparent"
            />
 
            <button onClick={() => {
               const d = new Date(selectedDate + "T00:00:00");
               d.setDate(d.getDate() + 1);
               setSelectedDate(d.toISOString().split('T')[0]);
-           }} className="w-10 h-10 flex items-center justify-center glass-panel border rounded-xl hover:bg-white/5 font-bold">→</button>
+           }} className="w-10 h-10 flex items-center justify-center border rounded-xl hover:bg-gray-50 font-bold transition-colors">→</button>
         </div>
         
         <button 
@@ -2029,20 +2030,20 @@ function CommunityPicksComponent() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* SUBMIT BOX */}
         <div className="lg:col-span-1">
-          <div className="glass-panelrounded-2xl p-6 shadow-md border border-gray-100 sticky top-6">
+          <div className="glass-panel rounded-2xl p-6 shadow-md border border-gray-100 sticky top-6">
             <h3 className="font-bold text-gray-900 mb-4 tracking-tight">Post a Pick</h3>
             <textarea 
               value={newPick}
               onChange={e => setNewPick(e.target.value)}
               placeholder="e.g. Suns ML"
-              className="w-full p-4 glass-panel rounded-xl mb-4 h-24 text-sm focus:ring-2 focus:ring-indigo-500 border-none resize-none"
+              className="w-full p-4 bg-gray-50 rounded-xl mb-4 h-24 text-sm focus:ring-2 focus:ring-indigo-500 border-none resize-none"
             />
             <button 
               onClick={async () => {
                 if(!newPick.trim() || !user) return;
                 await db.collection("communityPicks").add({
                   text: newPick,
-                  date: new Date().toISOString().split('T')[0], // Save as date string for query
+                  date: new Date().toISOString().split('T')[0],
                   fullTimestamp: new Date().toISOString(),
                   owner: user.email,
                   userId: user.uid,
@@ -2051,7 +2052,7 @@ function CommunityPicksComponent() {
                 setNewPick('');
                 loadPicks();
               }}
-              className="w-full py-4 bg-indigo-600 text-glass-panel rounded-xl font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+              className="w-full py-4 bg-indigo-600 text-white rounded-xl font-black hover:bg-indigo-700 transition-all shadow-md"
             >
               SUBMIT PICK
             </button>
@@ -2063,12 +2064,12 @@ function CommunityPicksComponent() {
           {loading ? (
             <div className="p-20 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">Loading Picks...</div>
           ) : picks.length === 0 ? (
-            <div className="p-20 text-center glass-panel rounded-3xl border-2 border-dashed border-white/10 text-gray-400">
+            <div className="p-20 text-center glass-panel rounded-3xl border-2 border-dashed border-gray-100 text-gray-400">
               No community picks found for this period.
             </div>
           ) : (
             picks.map(pick => (
-              <div key={pick.id} className="glass-panelp-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center group hover:shadow-md transition-all">
+              <div key={pick.id} className="glass-panel p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center group hover:shadow-md transition-all">
                 <div>
                   <div className="font-black text-gray-900 text-xl tracking-tight uppercase">{pick.text}</div>
                   <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest flex items-center gap-2 mt-1">
@@ -2078,36 +2079,42 @@ function CommunityPicksComponent() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* 👑 ADMIN CONTROLS: Only visible to you */}
+                <div className="flex items-center gap-2">
+                  {/* 🗑️ DELETE BUTTON: Visible to Admin OR the User who posted it */}
+                  {(isAdmin() || (user && user.uid === pick.userId)) && (
+                    <button 
+                      onClick={() => deletePick(pick.id, pick.userId)}
+                      className="p-2 text-gray-300 hover:text-red-500 transition-colors mr-2"
+                      title="Delete Pick"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+
+                  {/* 👑 ADMIN CONTROLS */}
                   {isAdmin() && (
-                    <div className="flex gap-1 glass-panel p-1 rounded-xl border border-gray-100 mr-2">
+                    <div className="flex gap-1 bg-gray-50 p-1 rounded-xl border border-gray-100 mr-2">
                       <button 
                         onClick={() => markResult(pick.id, 'win')} 
-                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${pick.result === 'win' ? 'bg-green-500 text-glass-panel' : 'glass-paneltext-green-600 hover:bg-green-50'}`}
-                      >
-                        W
-                      </button>
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${pick.result === 'win' ? 'bg-green-500 text-white' : 'text-green-600 hover:bg-green-50'}`}
+                      >W</button>
                       <button 
                         onClick={() => markResult(pick.id, 'loss')} 
-                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${pick.result === 'loss' ? 'bg-red-500 text-glass-panel' : 'glass-paneltext-red-600 hover:bg-red-50'}`}
-                      >
-                        L
-                      </button>
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${pick.result === 'loss' ? 'bg-red-500 text-white' : 'text-red-600 hover:bg-red-50'}`}
+                      >L</button>
                       <button 
                         onClick={() => markResult(pick.id, 'pending')} 
                         className="px-2 py-2 text-gray-300 hover:text-gray-600 text-[10px] font-bold"
-                        title="Reset to Pending"
-                      >
-                        ↺
-                      </button>
+                      >↺</button>
                     </div>
                   )}
                   
                   {/* Public Result Badge */}
                   {!isAdmin() && pick.result !== 'pending' && (
                     <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm ${
-                      pick.result === 'win' ? 'bg-green-500 text-glass-panel' : 'bg-red-500 text-glass-panel'
+                      pick.result === 'win' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
                     }`}>
                       {pick.result}
                     </div>
@@ -2121,7 +2128,6 @@ function CommunityPicksComponent() {
     </div>
   );
 }
-
     // --- Main App Component ---
     function App() {
       const { user, isAdmin, signIn, signOut } = useAuth();
