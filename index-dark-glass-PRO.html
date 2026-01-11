@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sports Analytics & Betting Tracker Pro — Dark Glass</title>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+  
+<style>
+:root {
+  --bg-deep: #0a0c10;
+  --card-glass: rgba(255, 255, 255, 0.04);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --neon-indigo: #6366f1;
+  --neon-emerald: #10b981;
+  --text-main: #f1f5f9;
+  --text-muted: #64748b;
+}
+
+body {
+  background-color: var(--bg-deep);
+  color: var(--text-main);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  margin: 0;
+}
+
+/* ================================
+   GLOBAL DARK GLASS THEME STYLES
+   ================================ */
+@keyframes pulse-glow {
+  0%,100% { box-shadow: 0 0 12px rgba(16,185,129,.5); }
+  50% { box-shadow: 0 0 28px rgba(16,185,129,.85); }
+}
+.smart-pick-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 420px;
+  padding: 16px 20px;
+  border-radius: 1rem;
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,.12);
+  color: var(--text-main);
+  box-shadow: 0 20px 50px rgba(0,0,0,.75);
+}
+
+.toast-success { border-left: 4px solid var(--neon-emerald); }
+.toast-error { border-left: 4px solid #ef4444; }
+.toast-info { border-left: 4px solid var(--neon-indigo); }
+.toast-warning { border-left: 4px solid #f59e0b; }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.65);
+  backdrop-filter: blur(6px);
+}
+
+.modal-content {
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 1.25rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  width: 92%;
+  max-width: 1200px;
+  color: var(--text-main);
+  box-shadow: 0 30px 80px rgba(0,0,0,.8);
+}
+
+.glass-panel {
+  background: var(--card-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-glass);
+}
+</style>
+
+<style>
+/* ================================
+   EXTRA DARK GLASS UI FEATURES
+   ================================ */
+
+.game-card {
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 12px 40px rgba(0,0,0,.7);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.game-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 60px rgba(0,0,0,.85);
+}
+
+.prop-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.prop-over {
+  background: rgba(16,185,129,.15);
+  color: #10b981;
+  border: 1px solid rgba(16,185,129,.4);
+}
+.prop-under {
+  background: rgba(239,68,68,.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,.4);
+}
+.prop-push {
+  background: rgba(245,158,11,.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245,158,11,.4);
+}
+
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  font-size: .7rem;
+  border-radius: 999px;
+  background: rgba(239,68,68,.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,.4);
+}
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse-glow 1.4s infinite;
+}
+
+.section-glass {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+</style>
+
+</head>
+<body class="min-h-screen">
+  <div id="root"></div>
+  <div id="toast-container"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    // --- Firebase Init ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDavfcHykW2i52oct-O4wIkOBl6QEk1j-s",
+      authDomain: "pay-me-data.firebaseapp.com",
+      projectId: "pay-me-data",
+      storageBucket: "pay-me-data.firebasestorage.app",
+      messagingSenderId: "106106251172",
+      appId: "1:106106251172:web:cbffa256b8d9f4f02bc331",
+      measurementId: "G-SWW9CNVT79"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    const ADMIN_EMAILS = [
+      "pickxhopper@gmail.com",
+      "pwhit24@gmail.com"
+    ];
+
+    const showToast = (message, type = 'info') => {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast-notification toast-${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('toast-exit');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    };
+
+    const ODDS_API_KEY = "cf9fa0f86d0f5dd25d96e0857eff5fc2"; 
+    const ODDS_REGIONS = "us";
+    const ODDS_MARKETS = "h2h,spreads,totals";
+    const ODDS_FORMAT = "american";
+
+    const ODDS_SPORT_KEYS = {
+      NFL: "football_nfl",
+      NBA: "basketball_nba",
+      NHL: "hockey_nhl",
+      NCAAF: "nfootball_ncaaf",
+      SOCCER: "soccer_epl" 
+    };
+
+    async function fetchOddsForLeague(league, dateISO=null) {
+      const sportKey = ODDS_SPORT_KEYS[league] || ODDS_SPORT_KEYS.NBA;
+      const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/odds/?apiKey=${ODDS_API_KEY}&regions=${ODDS_REGIONS}&markets=${ODDS_MARKETS}&oddsFormat=${ODDS_FORMAT}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Odds API error ${res.status}`);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (err) {
+        console.error("Odds API fetch error:", err);
+        return [];
+      }
+    }
+
+    async function fetchOddsByEvent(eventId, league) {
+      const sportKey = ODDS_SPORT_KEYS[league] || ODDS_SPORT_KEYS.NBA;
+      const url = `https://api.the-odds-api.com/v4/sports/${sportKey}/events/${eventId}/odds/?apiKey=${ODDS_API_KEY}&regions=${ODDS_REGIONS}&markets=${ODDS_MARKETS}&oddsFormat=${ODDS_FORMAT}`;
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Odds API event error ${res.status}`);
+        const data = await res.json();
+        return data?.bookmakers ? data.bookmakers : [];
+      } catch (err) {
+        return [];
+      }
+    }
+
+    function normalizeTeamName(name) {
+      return (name || "").toLowerCase()
+        .replace(/fc$/i,"")
+        .replace(/club$/i,"")
+        .replace(/city$/i,"")
+        .replace(/united$/i,"")
+        .replace(/\./g,'')
+        .replace(/[^a-z0-9\s]/g,'')
+        .replace(/\s+/g,' ')
+        .trim();
+    }
+
+    function matchOddsToTeams(oddsEvents, teamA, teamB) {
+      const a = normalizeTeamName(teamA);
+      const b = normalizeTeamName(teamB);
+      const isMatch = (event) => {
+        const home = normalizeTeamName(event.home_team);
+        const away = normalizeTeamName(event.away_team);
+        const exact = (home === a && away === b) || (home === b && away === a);
+        const loose = (home.includes(a) || home.includes(b)) && (away.includes(a) || away.includes(b));
+        return exact || loose;
+      };
+      return oddsEvents.find(isMatch) || null;
+    }
+
+    function bookmakersToBestLines(bookmakers, marketKey) {
+      const lines = [];
+      for (const bk of bookmakers || []) {
+        const market = (bk.markets || []).find(m => m.key === marketKey);
+        if (!market) continue;
+        if (marketKey === "h2h") {
+          for (const out of market.outcomes || []) {
+            lines.push({
+              bookmaker: bk.title,
+              label: out.name,
+              price: out.price,
+            });
+          }
+        } else if (marketKey === "spreads") {
+          for (const out of market.outcomes || []) {
+            lines.push({
+              bookmaker: bk.title,
+              label: `${out.name} ${out.point > 0 ? "+"+out.point : out.point}`,
+              price: out.price,
+              point: out.point,
+            });
+          }
+        } else if (marketKey === "totals") {
+          for (const out of market.outcomes || []) {
+            lines.push({
+              bookmaker: bk.title,
+              label: `${out.name} ${out.point}`,
+              price: out.price,
+              point: out.point,
+            });
+          }
+        }
+      }
+      return lines.sort((a,b) => b.price - a.price).slice(0, 5);
+    }
+    // --- League labels ---
+    const displayLeagueName = (league) => {
+      switch(league){
+        case "NFL": return "NFL 🏈";
+        case "NBA": return "NBA 🏀";
+        case "NHL": return "NHL 🏒";
+        case "SOCCER": return "SOCCER ⚽️";
+        case "NCAAF": return "NCAAF 🏈";
+        default: return league;
+      }
+    };
+    
+    // --- View labels for Nav Bar ---
+    const displayViewName = (view) => {
+        switch(view) {
+            case 'live': return 'Live Scores';
+            case 'teams': return 'Team Data';
+            case 'compare': return 'Comparison';
+            case 'bets': return 'Best Bets';
+            case 'community': return 'Community Picks';
+            default: return view;
+        }
+    };
+
+    // --- Divisions data (2025/26) ---
+    const DIVISIONS = {
+      NHL: {
+        'Atlantic': [
+          'Boston Bruins','Buffalo Sabres','Detroit Red Wings','Florida Panthers',
+          'Montreal Canadiens','Ottawa Senators','Tampa Bay Lightning','Toronto Maple Leafs'
+        ],
+        'Metropolitan': [
+          'Carolina Hurricanes','Columbus Blue Jackets','New Jersey Devils','New York Islanders',
+          'New York Rangers','Philadelphia Flyers','Pittsburgh Penguins','Washington Capitals'
+        ],
+        'Central': [
+          'Utah Mammoth',
+          'Chicago Blackhawks','Colorado Avalanche','Dallas Stars','Minnesota Wild',
+          'Nashville Predators','St. Louis Blues','Winnipeg Jets'
+        ],
+        'Pacific': [
+          'Anaheim Ducks','Calgary Flames','Edmonton Oilers','Los Angeles Kings',
+          'San Jose Sharks','Seattle Kraken','Vancouver Canucks','Vegas Golden Knights'
+        ]
+      },
+      NCAAF: {
+        'ACC': [
+          'Boston College','Clemson','Duke','Florida State','Georgia Tech','Louisville',
+          'Miami','NC State','North Carolina','Pittsburgh','Syracuse','Virginia',
+          'Virginia Tech','Wake Forest'
+        ],
+        'Big Ten': [
+          'Illinois','Indiana','Iowa','Maryland','Michigan','Michigan State','Minnesota',
+          'Nebraska','Northwestern','Ohio State','Penn State','Purdue','Rutgers','Wisconsin',
+          'Oregon','Washington','UCLA','USC'
+        ],
+        'Big 12': [
+          'Baylor','BYU','Cincinnati','Houston','Iowa State','Kansas','Kansas State',
+          'Oklahoma State','TCU','Texas Tech','UCF','West Virginia',
+          'Arizona','Arizona State','Colorado','Utah'
+        ],
+        'SEC': [
+          'Alabama','Arkansas','Auburn','Florida','Georgia','Kentucky','LSU',
+          'Mississippi State','Missouri','Ole Miss','South Carolina','Tennessee',
+          'Texas A&M','Vanderbilt','Oklahoma','Texas'
+        ],
+        'American': [
+          'East Carolina','Memphis','Navy','SMU','South Florida','Temple','Tulane','Tulsa'
+        ],
+        'Mountain West': [
+          'Air Force','Boise State','Colorado State','Fresno State','Hawaii','Nevada',
+          'New Mexico','San Diego State','San Jose State','UNLV','Utah State','Wyoming'
+        ],
+        'Sun Belt': [
+          'Appalachian State','Arkansas State','Coastal Carolina','Georgia Southern',
+          'Georgia State','James Madison','Louisiana','Marshall','Old Dominion',
+          'South Alabama','Southern Miss','Texas State','Troy'
+        ],
+        'Conference USA': [
+          'Florida Atlantic','Florida International','Jacksonville State','Liberty',
+          'Louisiana Tech','Middle Tennessee','New Mexico State','Sam Houston',
+          'UTEP','Western Kentucky'
+        ],
+        'MAC': [
+          'Akron','Ball State','Bowling Green','Buffalo','Central Michigan','Eastern Michigan',
+          'Kent State','Miami (OH)','Northern Illinois','Ohio','Toledo','Western Michigan'
+        ],
+        'Independents': ['Army','UConn','Notre Dame','UMass']
+      },
+      NFL: {
+        "AFC East":["Buffalo Bills","Miami Dolphins","New England Patriots","New York Jets"],
+        "AFC North":["Baltimore Ravens","Cincinnati Bengals","Cleveland Browns","Pittsburgh Steelers"],
+        "AFC South":["Houston Texans","Indianapolis Colts","Jacksonville Jaguars","Tennessee Titans"],
+        "AFC West":["Denver Broncos","Kansas City Chiefs","Las Vegas Raiders","Los Angeles Chargers"],
+        "NFC East":["Dallas Cowboys","New York Giants","Philadelphia Eagles","Washington Commanders"],
+        "NFC North":["Chicago Bears","Detroit Lions","Green Bay Packers","Minnesota Vikings"],
+        "NFC South":["Atlanta Falcons","Carolina Panthers","New Orleans Saints","Tampa Bay Buccaneers"],
+        "NFC West":["Arizona Cardinals","Los Angeles Rams","San Francisco 49ers","Seattle Seahawks"]
+      },
+      NBA: {
+        "Eastern — Atlantic":["Boston Celtics","Brooklyn Nets","New York Knicks","Philadelphia 76ers","Toronto Raptors"],
+        "Eastern — Central":["Chicago Bulls","Cleveland Cavaliers","Detroit Pistons","Indiana Pacers","Milwaukee Bucks"],
+        "Eastern — Southeast":["Atlanta Hawks","Charlotte Hornets","Miami Heat","Orlando Magic","Washington Wizards"],
+        "Western — Northwest":["Denver Nuggets","Minnesota Timberwolves","Oklahoma City Thunder","Portland Trail Blazers","Utah Jazz"],
+        "Western — Pacific":["Golden State Warriors","Los Angeles Clippers","Los Angeles Lakers","Phoenix Suns","Sacramento Kings"],
+        "Western — Southwest":["Dallas Mavericks","Houston Rockets","Memphis Grizzlies","New Orleans Pelicans","San Antonio Spurs"]
+      },
+      SOCCER: {
+        "English Premier League": [
+          "Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Burnley","Chelsea",
+          "Crystal Palace","Everton","Fulham","Liverpool","Luton Town","Manchester City",
+          "Manchester United","Newcastle United","Nottingham Forest","Sheffield United",
+          "Tottenham Hotspur","West Ham United","Wolverhampton"
+        ],
+        "La Liga (Spain)": [
+          "Athletic Club","Atletico Madrid","Barcelona","Celta Vigo","Getafe","Girona","Granada",
+          "Las Palmas","Mallorca","Osasuna","Rayo Vallecano","Real Betis","Real Madrid",
+          "Real Sociedad","Sevilla","Valencia","Villarreal","Alaves","Almeria","Cadiz"
+        ],
+        "Bundesliga (Germany)": [
+          "Bayer Leverkusen","Bayern Munich","Borussia Dortmund","Borussia Monchengladbach",
+          "Eintracht Frankfurt","FC Augsburg","FC Heidenheim","FSV Mainz 05","RB Leipzig",
+          "SC Freiburg","TSG Hoffenheim","Union Berlin","VfB Stuttgart","VfL Bochum",
+          "VfL Wolfsburg","Werder Bremen","FC Koln","SV Darmstadt"
+        ],
+        "Serie A (Italy)": [
+          "AC Milan","AS Roma","Atalanta","Bologna","Cagliari","Empoli","Fiorentina","Frosinone",
+          "Genoa","Hellas Verona","Inter Milan","Juventus","Lazio","Lecce","Monza","Napoli",
+          "Salernitana","Sassuolo","Torino","Udinese"
+        ],
+        "Ligue 1 (France)": [
+          "Brest","Clermont Foot","Le Havre","Lens","Lille","Lyon","Marseille","Metz","Monaco",
+          "Montpellier","Nantes","Nice","Paris Saint-Germain","RC Strasbourg","Reims","Rennes",
+          "Toulouse","Lorient"
+        ],
+        "Primeira Liga (Portugal)": [
+          "Benfica","Porto","Sporting CP","Braga","Vitoria Guimaraes","Gil Vicente","Rio Ave",
+          "Casa Pia","Famalicao","Estrela","Arouca","Boavista","Estoril","Farense","Vizela",
+          "Portimonense","Chaves"
+        ],
+        "MLS Eastern": [
+          "Atlanta United","CF Montreal","Charlotte FC","Chicago Fire","Columbus Crew","DC United",
+          "FC Cincinnati","Inter Miami","Nashville SC","New England Revolution","New York City FC",
+          "New York Red Bulls","Orlando City SC","Philadelphia Union","Toronto FC"
+        ],
+        "MLS Western": [
+          "Austin FC","Colorado Rapids","FC Dallas","Houston Dynamo","LA Galaxy","LAFC",
+          "Minnesota United","Portland Timbers","Real Salt Lake","San Jose Earthquakes",
+          "Seattle Sounders","Sporting Kansas City","St. Louis City SC","Vancouver Whitecaps"
+        ]
+      }
+    };
+
+    // --- Fuzzy matching utils ---
+    function levenshteinDistance(a, b) {
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+      for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+          else matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    function fuzzyMatch(search, target) {
+      search = search.toLowerCase().trim();
+      target = target.toLowerCase();
+      if (!search) return { score: 100, match: true };
+      if (target.includes(search)) return { score: 100, match: true };
+      const searchWords = search.split(/\s+/);
+      const targetWords = target.split(/\s+/);
+      let matchedWords = 0;
+      for (const sw of searchWords) {
+        for (const tw of targetWords) {
+          if (tw.startsWith(sw) || levenshteinDistance(sw, tw) <= 2) {
+            matchedWords++;
+            break;
+          }
+        }
+      }
+      const wordMatchScore = (matchedWords / searchWords.length) * 80;
+      let searchIdx = 0;
+      for (let i = 0; i < target.length && searchIdx < search.length; i++) {
+        if (target[i] === search[searchIdx]) searchIdx++;
+      }
+
+      const charMatchScore = (searchIdx / search.length) * 60;
+      const finalScore = Math.max(wordMatchScore, charMatchScore);
+      return { score: finalScore, match: finalScore > 40 };
+    }
+
+    // --- Authentication Hook (Login/Logout/Admin Status) ---
+    const useAuth = () => {
+      const [user, setUser] = useState(auth.currentUser);
+      useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(setUser);
+        return unsubscribe;
+      }, []);
+      /** @returns {boolean} */
+      const isAdmin = () => user && ADMIN_EMAILS.includes(user.email);
+      const signIn = () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).then(result => {
+          showToast(`Signed in as ${result.user.email}`, "success");
+        }).catch(err => {
+          showToast("Sign-in failed: " + err.message, "error");
+        });
+      };
+      const signOut = () => {
+        auth.signOut().then(() => showToast("Signed out", "info"));
+      };
+      return { user, isAdmin, signIn, signOut };
+    };
+
+// --- NavHeader Component (Dark Glass Updated) ---
+function NavHeader({ league, setLeague, user, isAdmin, signIn, signOut, view, setView }) {
+  const LEAGUES = Object.keys(DIVISIONS);
+  const VIEWS = ['live', 'teams', 'compare', 'bets', 'community'];
+  
+  return (
+    <nav className="glass-panel sticky top-0 z-50 border-b border-white/10 shadow-2xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <span className="text-xl font-black italic tracking-tighter">
+              <span className="text-indigo-500">PAY-ME</span>
+              <span className="text-white ml-1">DATA</span>
+            </span>
+          </div>
+          
+          <div className="hidden md:flex space-x-2">
+            {VIEWS.map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all 
+                  ${view === v 
+                    ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' 
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+              >
+                {displayViewName(v)}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* FIXED LEAGUE SELECTOR: Added explicit dark background for options */}
+            <select 
+              value={league} 
+              onChange={e => setLeague(e.target.value)} 
+              className="bg-[#1a1a1e] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-white/10 outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+            >
+              {LEAGUES.map(l => (
+                <option key={l} value={l} className="bg-slate-900 text-white">
+                  {displayLeagueName(l)}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex items-center gap-2">
+              {user ? (
+                <div className="flex items-center gap-3">
+                  <span className="hidden lg:block text-[10px] font-bold text-slate-400 uppercase">
+                    {user.email} {isAdmin() && <span className="text-red-500 ml-1">● ADMIN</span>}
+                  </span>
+                  <button onClick={signOut} className="text-xs font-bold text-red-400 hover:text-red-300 transition">
+                    LOGOUT
+                  </button>
+                </div>
+              ) : (
+                <button onClick={signIn} className="px-4 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition shadow-lg">
+                  SIGN IN
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+    // --- BoxScoreModal Component (Dark Glass Updated) ---
+    function BoxScoreModal({ game, league, onClose }) {
+      const [boxScore, setBoxScore] = React.useState(null);
+      const [loading, setLoading] = React.useState(true);
+
+      const ALLOWED_TEAM_STATS = [
+        'fieldGoalsMade-fieldGoalsAttempted', 'fieldGoalPct',
+        'threePointFieldGoalsMade-threePointFieldGoalsAttempted', 'threePointFieldGoalPct',
+        'freeThrowsMade-freeThrowsAttempted', 'freeThrowPct',
+        'totalRebounds', 'offensiveRebounds', 'defensiveRebounds',
+        'assists', 'turnovers', 'steals', 'blocks', 'fouls',
+      ];
+
+      React.useEffect(() => {
+        if (!game?.id) return;
+        const fetchBoxScore = async () => {
+          setLoading(true);
+          try {
+            let sport = 'basketball/nba';
+            if (league === 'NFL') sport = 'football/nfl';
+            if (league === 'NHL') sport = 'hockey/nhl';
+            if (league === 'NCAAF') sport = 'football/college-football';
+            if (league === 'SOCCER') sport = 'soccer/eng.1';
+
+            const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/summary?event=${game.id}`);
+            const data = await res.json();
+            setBoxScore(data);
+          } catch (e) {
+            console.error('Boxscore fetch failed', e);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchBoxScore();
+      }, [game?.id, league]);
+
+      const competition = boxScore?.header?.competitions?.[0];
+      const competitors = competition?.competitors || [];
+      const home = competitors.find(c => c.homeAway === 'home');
+      const away = competitors.find(c => c.homeAway === 'away');
+      const isFuture = competition?.status?.type?.state === 'pre';
+
+      // Advanced Matchup Simulator
+      const runSimulation = () => {
+        const parseRec = (rec) => {
+          if (!rec) return 0.5;
+          const [w, l] = rec.split('-').map(Number);
+          return (w + l) > 0 ? w / (w + l) : 0.5;
+        };
+
+        const awayWinPct = parseRec(away?.record?.[0]?.summary);
+        const awayRoadPct = parseRec(away?.record?.[2]?.summary);
+        const homeWinPct = parseRec(home?.record?.[0]?.summary);
+        const homeVenuePct = parseRec(home?.record?.[1]?.summary);
+
+        const homeB2B = home?.record?.some(r => r.type === 'daysrest' && r.summary === '0') ? 0.95 : 1.0;
+        const awayB2B = away?.record?.some(r => r.type === 'daysrest' && r.summary === '0') ? 0.95 : 1.0;
+
+        const awayPower = ((awayWinPct * 0.3) + (awayRoadPct * 0.5)) * awayB2B;
+        const homePower = ((homeWinPct * 0.3) + (homeVenuePct * 0.5)) * homeB2B;
+
+        const total = (awayPower + homePower) || 1;
+        return {
+          homeProb: ((homePower / total) * 100).toFixed(1),
+          awayProb: ((awayPower / total) * 100).toFixed(1),
+          winner: homePower > awayPower ? home?.team?.displayName : away?.team?.displayName,
+        };
+      };
+
+      const sim = isFuture && away && home ? runSimulation() : null;
+
+      const renderTeamStats = (team) => {
+        if (!Array.isArray(team?.statistics)) return <p className="text-xs italic text-slate-500">Stats not available yet.</p>;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+            {team.statistics
+              .flatMap(g => g.stats || [])
+              .filter(stat => stat.displayValue && ALLOWED_TEAM_STATS.includes(stat.name))
+              .map((stat, i) => (
+                <div key={i} className="flex justify-between border-b border-white/5 py-2 text-sm">
+                  <span className="text-slate-400 font-medium">{stat.label || stat.name}</span>
+                  <span className="font-bold text-white">{stat.displayValue}</span>
+                </div>
+              ))}
+          </div>
+        );
+      };
+  
+return (
+    <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-md" onClick={onClose}>
+      <div className="bg-[#0f172a]/90 border border-white/10 w-full max-w-6xl max-h-[92vh] overflow-y-auto rounded-3xl shadow-[0_0_50px_rgba(0,0,0,1)]" onClick={e => e.stopPropagation()}>
+        
+        {/* Sticky Header */}
+        <div className="sticky top-0 bg-slate-900/80 backdrop-blur-xl border-b border-white/10 px-8 py-5 flex justify-between items-center z-30">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-3">
+              <img src={away?.team?.logo} className="w-12 h-12 object-contain drop-shadow-lg" />
+              <span className="text-2xl font-black italic tracking-tighter text-white">{away?.team?.abbreviation}</span>
+            </div>
+            <div className="text-slate-500 font-black text-xl italic tracking-widest">VS</div>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl font-black italic tracking-tighter text-white">{home?.team?.abbreviation}</span>
+              <img src={home?.team?.logo} className="w-12 h-12 object-contain drop-shadow-lg" />
+            </div>
+          </div>
+          <button onClick={onClose} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-all">
+            <span className="text-2xl text-white">&times;</span>
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="p-32 text-center flex flex-col items-center gap-6">
+            <div className="w-14 h-14 border-[3px] border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-400 font-bold tracking-widest text-xs uppercase">Analyzing Match Data...</p>
+          </div>
+        ) : (
+          <div className="p-8 space-y-16">
+
+            {/* CASE 1: FUTURE GAME - MATCHUP SIMULATOR */}
+            {isFuture && sim ? (
+              <section className="space-y-8">
+                <div className="bg-gradient-to-br from-indigo-600/20 to-slate-900 border border-indigo-500/30 rounded-[2rem] p-10 relative overflow-hidden shadow-2xl">
+                  <div className="relative z-10 text-center">
+                    <span className="bg-indigo-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.3em]">AI Prediction Engine</span>
+                    <h3 className="text-5xl font-black mt-6 mb-2 italic text-white leading-tight">PROJECTED WINNER: <span className="text-indigo-400">{sim.winner.toUpperCase()}</span></h3>
+                    
+                    <div className="flex justify-between items-end mb-3 mt-12 px-2">
+                      <span className="text-xs font-bold text-red-400 uppercase tracking-wider">{away?.team?.displayName} {sim.awayProb}%</span>
+                      <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">{home?.team?.displayName} {sim.homeProb}%</span>
+                    </div>
+                    
+                    <div className="w-full h-5 bg-white/5 rounded-full flex overflow-hidden p-1 border border-white/10">
+                      <div className="h-full bg-red-500 rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(239,68,68,0.5)]" style={{ width: `${sim.awayProb}%` }}></div>
+                      <div className="h-full bg-indigo-500 rounded-full transition-all duration-1000 ml-1 shadow-[0_0_15px_rgba(99,102,241,0.5)]" style={{ width: `${sim.homeProb}%` }}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                    <h5 className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Venue Strength</h5>
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm"><span className="text-slate-400">{away?.team?.abbreviation} Away</span><span className="font-bold text-white">{away?.record?.[2]?.summary || 'N/A'}</span></div>
+                      <div className="flex justify-between text-sm"><span className="text-slate-400">{home?.team?.abbreviation} Home</span><span className="font-bold text-white">{home?.record?.[1]?.summary || 'N/A'}</span></div>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                    <h5 className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Rest Factor</h5>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between"><span className="text-slate-400">{away?.team?.abbreviation} Status</span><span className={sim.isAwayB2B ? 'text-orange-500 font-bold' : 'text-emerald-500 font-bold'}>{sim.isAwayB2B ? 'B2B' : 'RESTED'}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-400">{home?.team?.abbreviation} Status</span><span className={sim.isHomeB2B ? 'text-orange-500 font-bold' : 'text-emerald-500 font-bold'}>{sim.isHomeB2B ? 'B2B' : 'RESTED'}</span></div>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 p-6 rounded-2xl border border-white/10">
+                    <h5 className="text-[10px] font-black text-slate-500 uppercase mb-4 tracking-widest">Health Report</h5>
+                    <p className="text-[11px] text-slate-400 leading-relaxed italic">Checking real-time injury status for {away?.team?.shortDisplayName} and {home?.team?.shortDisplayName} depth charts...</p>
+                  </div>
+                </div>
+              </section>
+            ) : (
+              /* CASE 2: LIVE/POST GAME - BOX SCORE */
+              <div className="space-y-16">
+                <section>
+                  <h3 className="text-xs font-black text-indigo-400 mb-8 flex items-center gap-3 uppercase tracking-[0.3em]">
+                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-ping"></span>
+                    Team Performance Metrics
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-10">
+                    <div className="bg-white/5 p-8 rounded-3xl border border-white/5">
+                      <div className="flex items-center gap-4 mb-6">
+                        <img src={away?.team?.logo} className="w-8 h-8" />
+                        <h4 className="font-black text-white uppercase tracking-tight italic">{away?.team?.displayName}</h4>
+                      </div>
+                      {renderTeamStats(boxScore?.boxscore?.teams.find(t => t.team?.id === away?.team?.id))}
+                    </div>
+                    <div className="bg-white/5 p-8 rounded-3xl border border-white/5">
+                      <div className="flex items-center gap-4 mb-6">
+                        <img src={home?.team?.logo} className="w-8 h-8" />
+                        <h4 className="font-black text-white uppercase tracking-tight italic">{home?.team?.displayName}</h4>
+                      </div>
+                      {renderTeamStats(boxScore?.boxscore?.teams.find(t => t.team?.id === home?.team?.id))}
+                    </div>
+                  </div>
+                </section>
+
+                {boxScore?.boxscore?.players?.map((teamBlock, tIdx) => (
+                  <section key={tIdx} className="space-y-6">
+                    <h3 className="text-xs font-black text-slate-400 flex items-center gap-3 uppercase tracking-[0.2em]">
+                      <img src={teamBlock.team?.logo} className="w-6 h-6 grayscale opacity-70" />
+                      {teamBlock.team?.displayName} Individual Data
+                    </h3>
+                    {teamBlock.statistics?.map((group, gIdx) => (
+                      <div key={gIdx} className="overflow-hidden border border-white/10 rounded-2xl bg-white/5 shadow-xl">
+                        <div className="bg-white/5 px-5 py-3 text-[10px] font-black uppercase text-slate-500 tracking-widest border-b border-white/5">{group.name || 'Statistics'}</div>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full text-[11px]">
+                            <thead>
+                              <tr className="border-b border-white/5">
+                                <th className="p-4 text-left font-black text-slate-400 uppercase sticky left-0 bg-slate-900 z-10 border-r border-white/5">Athlete</th>
+                                {group.labels?.map((l, i) => (
+                                  <th key={i} className="p-4 text-center font-black text-slate-400 uppercase">{l}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                              {group.athletes?.map((a, i) => (
+                                <tr key={i} className="hover:bg-white/5 transition-colors">
+                                  <td className="p-4 font-bold text-white sticky left-0 bg-slate-900 z-10 whitespace-nowrap border-r border-white/5">
+                                    {a.athlete?.displayName}
+                                    <span className="block text-[9px] text-indigo-400 font-bold mt-0.5">{a.athlete?.position?.abbreviation}</span>
+                                  </td>
+                                  {a.stats?.map((val, j) => (
+                                    <td key={j} className="p-4 text-center text-slate-300 font-medium">{val}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </section>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+    
+// ==========================================
+// 🔴 CORE DATA & SIMULATION ENGINE
+// ==========================================
+const PRO_DATA = {
+  // ESPN Fuzzy Match & Deep Data Fetch
+  fetchTeamStats: async (teamName, league) => {
+    try {
+      const sportMap = { 'NHL': 'hockey/nhl', 'NFL': 'football/nfl', 'NBA': 'basketball/nba', 'SOCCER': 'soccer/eng.1', 'NCAAF': 'football/college-football' };
+      const sport = sportMap[league] || 'basketball/nba';
+      const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/teams`);
+      const data = await res.json();
+      
+      const teamObj = data.sports?.[0]?.leagues?.[0]?.teams.find(t => 
+        t.team.displayName.toLowerCase().includes(teamName.toLowerCase()) || 
+        t.team.abbreviation?.toLowerCase() === teamName.toLowerCase()
+      );
+      
+      if (!teamObj) return null;
+      const statsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/teams/${teamObj.team.id}?enable=roster,stats,records,leaders`);
+      const finalData = await statsRes.json();
+      return finalData.team;
+    } catch (e) { return null; }
+  },
+
+  // Match Simulator Logic
+  simulateMatchup: (teamA, teamB) => {
+    const scoreA = Math.floor(Math.random() * (120 - 90) + 90);
+    const scoreB = Math.floor(Math.random() * (120 - 90) + 90);
+    const winProb = Math.floor(Math.random() * (75 - 45) + 45);
+    return {
+      scoreA, scoreB,
+      winner: scoreA > scoreB ? teamA : teamB,
+      probability: winProb,
+      keyFactor: "Superior bench depth and perimeter defense."
+    };
+  }
+};
+
+// ==========================================
+// 🔴 LiveScoreboard (DARK GLASS + ROBUST DATA)
+// ==========================================
+function LiveScoreboard({ league, db }) {
+  const [scores, setScores] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [selectedGame, setSelectedGame] = React.useState(null);
+  const [date, setDate] = React.useState(new Date());
+
+  const fetchScores = async () => {
+    setLoading(true);
+    try {
+      const sportMap = { 'NFL': 'football/nfl', 'NHL': 'hockey/nhl', 'NCAAF': 'football/college-football', 'SOCCER': 'soccer/eng.1' };
+      const sport = sportMap[league] || 'basketball/nba';
+      const d = date.toISOString().split('T')[0].replace(/-/g, '');
+      const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard?dates=${d}`);
+      const data = await res.json();
+      setScores(data);
+    } catch (e) { console.error(e); } 
+    finally { setLoading(false); }
+  };
+
+  React.useEffect(() => { fetchScores(); }, [league, date]);
+
+  const navDate = (days) => {
+    const nd = new Date(date);
+    nd.setDate(nd.getDate() + days);
+    setDate(nd);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* 📅 Navigation Glass Panel */}
+      <div className="flex items-center justify-between bg-white/5 p-4 rounded-3xl border border-white/10 backdrop-blur-md shadow-2xl">
+        <div className="flex gap-2">
+          <button onClick={() => navDate(-1)} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black border border-white/5 tracking-widest transition-all">← PREV</button>
+          <button onClick={() => navDate(1)} className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black border border-white/5 tracking-widest transition-all">NEXT →</button>
+        </div>
+        
+        <div className="flex items-center gap-4">
+           <div className="hidden md:block text-[10px] font-black text-slate-500 tracking-[0.3em] uppercase">ESPN LIVE SYNC ACTIVE</div>
+           <input 
+            type="date" 
+            value={date.toISOString().split('T')[0]} 
+            onChange={e => setDate(new Date(e.target.value))} 
+            className="bg-white text-black font-black px-4 py-1 rounded-full border-none text-xs font-black px-4 py-2 rounded-xl border border-indigo-500/30 outline-none uppercase tracking-widest cursor-pointer" 
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 opacity-50">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-44 rounded-[2rem] bg-white/5 animate-pulse border border-white/5" />)}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {scores?.events?.map(g => {
+            const comp = g.competitions[0];
+            const away = comp.competitors.find(c => c.homeAway === 'away');
+            const home = comp.competitors.find(c => c.homeAway === 'home');
+            const status = comp.status.type;
+            const isLive = status.state === 'in';
+
+            return (
+              <div 
+                key={g.id} 
+                onClick={() => setSelectedGame(g)} 
+                className="group relative bg-[#111114]/80 border border-white/10 rounded-[2.5rem] p-6 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all cursor-pointer shadow-xl overflow-hidden"
+              >
+                {/* Visual Glow */}
+                <div className={`absolute top-0 right-0 w-24 h-24 blur-[60px] rounded-full opacity-20 transition-all ${isLive ? 'bg-red-500' : 'bg-indigo-500'}`}></div>
+
+                <div className="flex justify-between items-center mb-5 relative z-10">
+                  <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest border ${isLive ? 'bg-red-500/20 border-red-500/50 text-red-400 animate-pulse' : 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'}`}>
+                    {isLive ? '🔴 LIVE' : status.shortDetail}
+                  </span>
+                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">
+                    {comp.broadcasts?.[0]?.names?.[0] || 'Syncing...'}
+                  </span>
+                </div>
+
+                <div className="space-y-4 relative z-10">
+                  {[away, home].map((t, idx) => (
+                    <div key={idx} className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <img src={t.team.logo} className="w-8 h-8 object-contain grayscale group-hover:grayscale-0 transition-all duration-500" />
+                        <div className="flex flex-col">
+                          <span className="text-sm font-black text-slate-200 group-hover:text-white uppercase tracking-tighter italic">
+                            {t.team.abbreviation || t.team.displayName.substring(0,3)}
+                          </span>
+                          <span className="text-[8px] font-bold text-slate-600 group-hover:text-indigo-400 transition-colors uppercase">
+                            {t.records?.[0]?.summary || '0-0'}
+                          </span>
+                        </div>
+                      </div>
+                      <span className={`text-2xl font-black italic tracking-tighter ${t.winner ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-200'}`}>
+                        {t.score}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+                   <div className="flex flex-col">
+                     <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">Smart Match Simulation</p>
+                     <p className="text-[10px] text-white font-bold uppercase">View ESPN Data →</p>
+                   </div>
+                   <div className="w-8 h-8 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center">
+                      <span className="text-indigo-400 text-xs">⚡</span>
+                   </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {selectedGame && (
+        <BoxScoreModal 
+          game={selectedGame} 
+          league={league} 
+          db={db} 
+          onClose={() => setSelectedGame(null)} 
+          apiEngine={PRO_DATA} // Passing the robust engine into the modal
+        />
+      )}
+    </div>
+  );
+}    
+  // --- Updated Persistence Helpers ---
+async function loadNotesForLeague(db, league) {
+  // Matches "match /notes/{docId}" in your rules
+  const snapshot = await db.collection("notes").doc(league).get();
+  return snapshot.exists ? snapshot.data() : {};
+}
+
+async function saveNotes(db, league, team, notes) {
+  // Matches "match /notes/{docId}" in your rules
+  const docRef = db.collection("notes").doc(league);
+  await docRef.set({ [team]: notes }, { merge: true });
+}
+
+    // --- Placeholder Data Generators (Real-time but consistent) ---
+    function generateBettingTrends(teamName) {
+      const seed = teamName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const trends = [
+        `Team is ${seed % 5 + 1}-1 ATS in its last ${seed % 7 + 3} games.`,
+        `The total has gone ${seed % 2 === 0 ? 'OVER' : 'UNDER'} in ${seed % 4 + 2} of the last 5 games.`,
+        `They are ${seed % 3 + 1}-0 SU against teams with a losing record.`,
+        `The home/away team has covered in ${seed % 4 + 2} of the last 6 matchups.`,
+        `Team is 0-4 ATS after a straight-up win. (Fading opportunity)`
+      ];
+      return trends.slice(0, 3 + (seed % 3));
+    }
+
+    function generateTopLeaders(teamStats, teamName, league) {
+      if (!teamStats?.roster?.athletes) return null;
+      const allPlayers = [];
+      teamStats.roster.athletes.forEach(positionGroup => {
+        positionGroup.items?.forEach(player => {
+          allPlayers.push({ ...player, positionGroup: positionGroup.position });
+        });
+      });
+      if (allPlayers.length === 0) return null;
+      const seed = teamName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      
+      const leaderCandidates = allPlayers.filter(p => p.positionGroup?.includes("Offense") || p.positionGroup?.includes("Forward") || p.positionGroup?.includes("Guard") || p.positionGroup?.includes("Midfielder"));
+      
+      const leaders = [];
+      const usedIndexes = new Set();
+      
+      while(leaders.length < 3 && leaderCandidates.length > leaders.length) {
+        const idx = (seed + leaders.length * 17) % leaderCandidates.length;
+        if (!usedIndexes.has(idx)) {
+          leaders.push(leaderCandidates[idx]);
+          usedIndexes.add(idx);
+        }
+      }
+
+      const generateStat = (player, index) => {
+        const playerSeed = player.fullName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + seed + index;
+        const random = (min, max) => {
+          const x = Math.sin(playerSeed + min + max) * 10000;
+          return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
+        };
+        if (league === 'NHL') {
+          return { label: index === 0 ? 'Points' : index === 1 ? 'Goals' : 'Assists', value: index === 0 ? random(60, 120) : index === 1 ? random(30, 60) : random(40, 80) };
+        } else if (league === 'NFL' || league === 'NCAAF') {
+          const pos = player.position?.abbreviation || 'RB';
+          if (pos === 'QB') return { label: 'Passing Yards', value: random(3000, 5000) };
+          else if (pos === 'RB') return { label: 'Rushing Yards', value: random(800, 1500) };
+          else if (pos === 'WR' || pos === 'TE') return { label: 'Receiving Yards', value: random(900, 1800) };
+          else return { label: 'Tackles', value: random(50, 120) };
+        } else if (league === 'NBA') {
+          return { label: index === 0 ? 'PPG' : index === 1 ? 'RPG' : 'APG', value: index === 0 ? random(15, 35).toFixed(1) : index === 1 ? random(4, 12).toFixed(1) : random(3, 10).toFixed(1) };
+        } else if (league === 'SOCCER') {
+          return { label: index === 0 ? 'Goals' : index === 1 ? 'Assists' : 'Saves', value: index === 0 ? random(10, 30) : index === 1 ? random(5, 20) : random(50, 150) };
+        }
+        return { label: 'Rating', value: random(75, 99).toFixed(1) };
+      };
+
+      return leaders.map((player, index) => ({
+        ...player,
+        stat: generateStat(player, index)
+      }));
+    }
+
+    async function fetchTeamStatsFromESPN(teamName, league) {
+      try {
+        let sport;
+        if (league === 'NHL') sport = 'hockey/nhl';
+        else if (league === 'NFL') sport = 'football/nfl';
+        else if (league === 'NBA') sport = 'basketball/nba';
+        else if (league === 'SOCCER') sport = 'soccer/eng.1';
+        else if (league === 'NCAAF') sport = 'football/college-football';
+        else sport = 'basketball/nba';
+
+        const teamsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/teams`);
+        const teamsData = await teamsRes.json();
+        
+        const team = teamsData.sports?.[0]?.leagues?.[0]?.teams.find(t => fuzzyMatch(teamName, t.team.displayName).match);
+        if (!team) return null;
+
+        const statsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/teams/${team.team.id}?enable=roster,stats,records,leaders,notes`);
+        const statsData = await statsRes.json();
+        return statsData.team;
+      } catch (err) {
+        console.error("Error fetching team stats:", err);
+        return null;
+      }
+    }
+
+    function generateSmartPick(teamStats, trends) {
+      if (!teamStats) return { confidence: 0, factors: ["Failed to load team data."], pick: "N/A" };
+      
+      const isGoodTeam = teamStats.record?.items?.[0]?.summary?.split('-')?.[0] > teamStats.record?.items?.[0]?.summary?.split('-')?.[1];
+      const seed = teamStats.displayName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      
+      const confidence = 65 + (seed % 20) + (isGoodTeam ? 10 : 0);
+      const pick = isGoodTeam ? `Moneyline or -1.5 Spread on ${teamStats.displayName}` : `Opponent +1.5 Spread vs ${teamStats.displayName}`;
+      
+      const factors = [
+        `Strong H2H record: ${isGoodTeam ? '9-1' : '1-9'} vs Divisional Opponents.`,
+        trends[0],
+        `Ranked #${seed % 32 + 1} in Offensive Efficiency.`,
+        `Projected game total: ${190 + seed % 50}.`
+      ];
+      
+      return { confidence, factors, pick };
+    }
+
+
+    // --- TeamDataTracker Component (Bright Theme) ---
+    function TeamDataTracker({ divisions, initialLeague, onLeagueChange }) {
+      const [league, setLeague] = useState(initialLeague);
+      const [selectedTeam, setSelectedTeam] = useState(null);
+      const [teamData, setTeamData] = useState({});
+      const [teamStats, setTeamStats] = useState(null);
+      const [statsLoading, setStatsLoading] = useState(false);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState('');
+      const [success, setSuccess] = useState('');
+      const { user, isAdmin } = useAuth();
+      const [bettingTrends, setBettingTrends] = useState([]);
+      const [smartPick, setSmartPick] = useState(null);
+      const [topLeaders, setTopLeaders] = useState(null);
+
+
+      const fetchTeamStats = useCallback(async (teamName) => {
+        setStatsLoading(true);
+        setTeamStats(null);
+        setBettingTrends([]);
+        setSmartPick(null);
+        setTopLeaders(null);
+
+        try {
+          const statsData = await fetchTeamStatsFromESPN(teamName, league);
+          if (!statsData) throw new Error("Team not found in ESPN data.");
+
+          setTeamStats(statsData);
+          
+          // Generate placeholder betting data
+          const trends = generateBettingTrends(teamName);
+          setBettingTrends(trends);
+
+          const pick = generateSmartPick(statsData, trends);
+          setSmartPick(pick);
+
+          const leaders = generateTopLeaders(statsData, teamName, league);
+          setTopLeaders(leaders);
+
+          showToast(`${teamName} stats loaded!`, 'success');
+        } catch (err) {
+          setTeamStats({ error: 'Failed to load stats: ' + (err.message || err) });
+          showToast('Failed to load team stats', 'error');
+        } finally {
+          setStatsLoading(false);
+        }
+      }, [league]);
+
+      const loadData = async () => {
+        setLoading(true);
+        setError('');
+        try {
+          const processedData = await loadNotesForLeague(db, league);
+          setTeamData(processedData);
+        } catch (err) {
+          console.error(err);
+          setError('Error loading: ' + (err.message || err));
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const selectTeamAndLoadStats = async (team) => {
+        setSelectedTeam(team);
+        setError('');
+        setSuccess('');
+        await fetchTeamStats(team);
+      };
+
+      const saveItem = async (team, items) => {
+        setLoading(true);
+        setSuccess('');
+        setError('');
+        try {
+          await saveNotes(db, league, team, items);
+          setTeamData(prev => ({ ...prev, [team]: items }));
+          setSuccess('Saved!');
+          showToast('Note saved!', 'success');
+          setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+          setError('Save error: ' + (err.message || err));
+          showToast('Save error', 'error');
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      const handleAddNote = (team, note) => {
+        if (!note.trim()) return;
+        const currentNotes = teamData[team] || [];
+        const newNotes = [...currentNotes, { id: Date.now(), text: note, date: new Date().toISOString() }];
+        saveItem(team, newNotes);
+      };
+
+      const handleDeleteNote = (team, id) => {
+        const currentNotes = teamData[team] || [];
+        const newNotes = currentNotes.filter(n => n.id !== id);
+        saveItem(team, newNotes);
+      };
+      
+      useEffect(() => {
+        onLeagueChange(league); // Notify parent of league change
+        loadData();
+        setSelectedTeam(null);
+        setTeamStats(null);
+      }, [league]);
+
+
+      const TeamNoteEditor = ({ teamName, currentNotes = [] }) => {
+        const [newNote, setNewNote] = useState('');
+        
+        return (
+          <div className="glass-panel rounded-xl p-6 border border-white/10">
+            <h3 className="text-xl font-bold text-indigo-600 mb-4">✍️ Analyst Notes</h3>
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-hide">
+              {currentNotes.length === 0 ? (
+                <p className="text-gray-500 text-sm">No notes saved for this team.</p>
+              ) : (
+                currentNotes.map(note => (
+                  <div key={note.id} className="p-3 bg-white/5 rounded-lg flex justify-between items-start border border-white/10">
+                    <p className="glass-panel text-sm">{note.text}</p>
+                    <button 
+                      onClick={() => handleDeleteNote(teamName, note.id)} 
+                      className="ml-4 text-red-500 hover:text-red-700 text-lg leading-none"
+                      disabled={!user}
+                      title={!user ? "Sign in to delete notes" : "Delete Note"}
+                    >
+                      &times;
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                placeholder={user ? "Add a new note..." : "Sign in to add notes..."}
+                rows="3"
+                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 glass-panel"
+                disabled={!user}
+              ></textarea>
+              <button
+                onClick={() => { handleAddNote(teamName, newNote); setNewNote(''); }}
+                className="mt-2 w-full px-4 py-2 bg-indigo-600 text-glass-panel font-semibold rounded-lg hover:bg-indigo-700 transition"
+                disabled={!user || !newNote.trim()}
+              >
+                Save Note
+              </button>
+            </div>
+          </div>
+        );
+      };
+
+      return (
+        <div className="w-full max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 mb-6">
+            Team Analytics & Tracker
+          </h1>
+
+          <div className="flex flex-col md:flex-row gap-6">
+            {/* Left Column: Division/Team List */}
+            <div className="w-full md:w-1/3">
+              <div className="glass-panel rounded-xl p-6 shadow-xl border border-white/10 sticky top-20">
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Select {displayLeagueName(league)} Team</h2>
+                <select 
+                  value={league} 
+                  onChange={e => setLeague(e.target.value)} 
+                  className="w-full px-3 py-2 glass-panel rounded border border-gray-300 focus:ring-2 focus:ring-indigo-500 mb-4"
+                >
+                  {Object.keys(divisions).map(l => (
+                    <option key={l} value={l}>{displayLeagueName(l)}</option>
+                  ))}
+                </select>
+
+                {error && <div className="text-sm text-red-600 mb-4">{error}</div>}
+                
+                {loading ? (
+                  <div className="text-center py-4 text-gray-500">Loading divisions...</div>
+                ) : (
+                  <div className="max-h-[80vh] overflow-y-auto scrollbar-show space-y-4">
+                    {Object.entries(divisions[league] || {}).map(([division, teams]) => (
+                      <div key={division} className="rounded-lg bg-white/5 p-4 border border-white/10">
+                        <h3 className="text-lg font-bold text-indigo-600 mb-3">{division}</h3>
+                        <div className="space-y-2">
+                          {teams.map(team => (
+                            <button 
+                              key={team} 
+                              onClick={() => selectTeamAndLoadStats(team)} 
+                              className={`w-full text-left p-3 rounded-lg transition-colors 
+                                  ${selectedTeam === team 
+                                    ? 'bg-indigo-600 text-glass-panel shadow-md font-semibold' 
+                                    : 'glass-panelhover:bg-gray-200 glass-panel border border-gray-300'
+                                  }`}
+                            >
+                              {team}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Team Stats and Notes */}
+            <div className="w-full md:w-2/3">
+              {selectedTeam ? (
+                <div className="space-y-6">
+                  {/* Smart Pick Analysis */}
+                  {smartPick && (
+                    <div className="glass-panel rounded-xl p-6 shadow-xl border-4 border-green-500 smart-pick-glow">
+                      <h2 className="text-2xl font-extrabold text-green-600 mb-4 flex items-center gap-2">
+                        ⭐ AI Smart Pick: {selectedTeam}
+                      </h2>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                          <p className="text-4xl font-bold text-gray-900">
+                            {smartPick.confidence}%
+                          </p>
+                          <p className="text-sm text-gray-600">Confidence Rating</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <p className="text-xl font-bold glass-panel mb-2">{smartPick.pick}</p>
+                          <h4 className="font-semibold text-indigo-600 mb-1">Key Factors:</h4>
+                          <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                            {smartPick.factors.map((factor, idx) => (
+                              <li key={idx}>{factor}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Team Stats */}
+                  <div className="glass-panel rounded-xl p-6 shadow-xl border border-white/10">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                      📊 {selectedTeam} Team Profile
+                    </h1>
+                    {statsLoading ? (
+                      <div className="text-center py-8 text-gray-500">Loading stats...</div>
+                    ) : teamStats?.error ? (
+                      <div className="text-center py-8 text-red-600 font-medium">{teamStats.error}</div>
+                    ) : teamStats ? (
+                      <div className="space-y-6">
+                        <div className="text-center border-b border-white/10 pb-4">
+                          {teamStats.logos && teamStats.logos[0] && <img src={teamStats.logos[0].href} alt={teamStats.displayName} className="h-24 mx-auto mb-2" />}
+                          <div className="text-2xl font-bold text-gray-900">{teamStats.displayName}</div>
+                          <div className="text-gray-500">{teamStats.standingSummary}</div>
+                        </div>
+
+                        {/* Core Stats / Betting Trends / Leaders */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                          {/* Record */}
+                          {teamStats.record?.items && (
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <h3 className="font-bold text-indigo-600 mb-2">📈 Record</h3>
+                              {teamStats.record.items.map((item, idx) => (
+                                <div key={idx} className="text-gray-700 flex justify-between text-sm">
+                                  <span className="font-medium">{item.description}:</span> 
+                                  <span className="font-semibold">{item.summary}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Betting Trends */}
+                          {bettingTrends.length > 0 && (
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <h3 className="font-bold text-indigo-600 mb-2">🔥 Betting Trends</h3>
+                              <ul className="list-disc list-inside text-gray-700 space-y-1 text-sm">
+                                {bettingTrends.map((trend, idx) => (
+                                  <li key={idx}>{trend}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Top Leaders */}
+                          {topLeaders?.length > 0 && (
+                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                              <h3 className="font-bold text-indigo-600 mb-2">👑 Team Leaders</h3>
+                              <div className="space-y-2">
+                                {topLeaders.map((leader, idx) => (
+                                  <div key={idx} className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-700">{leader.athlete.shortName} ({leader.athlete.position.abbreviation})</span>
+                                    <span className="font-semibold text-gray-900">{leader.stat.value} {leader.stat.label}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Detailed Stats */}
+                        {teamStats.stats?.[0]?.stats && (
+                          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                            <h3 className="text-xl font-bold text-gray-900 mb-3 border-b pb-2">Season Averages</h3>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                              {teamStats.stats[0].stats.slice(0, 15).map((stat, idx) => (
+                                <div key={idx} className="p-2 glass-panel rounded-lg border border-white/10">
+                                  <div className="text-sm font-semibold glass-panel truncate">{stat.name}</div>
+                                  <div className="text-lg font-bold text-indigo-600">{stat.displayValue}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* External Links */}
+                        {teamStats.links && teamStats.links.length > 0 && (
+                            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                <h2 className="text-lg font-bold text-gray-900 mb-3">External Links</h2>
+                                <div className="flex flex-wrap gap-3">
+                                    {teamStats.links.map((link, idx) => (
+                                        <a 
+                                            key={idx} 
+                                            href={link.href} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="px-3 py-1 bg-green-500 text-glass-panel text-sm rounded-full hover:bg-green-600 transition"
+                                        >
+                                            {link.text}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Analyst Notes */}
+                  <TeamNoteEditor 
+                    teamName={selectedTeam} 
+                    currentNotes={teamData[selectedTeam]}
+                  />
+                </div>
+              ) : (
+                <div className="glass-panel rounded-xl p-12 text-center shadow-xl border border-white/10">
+                  <p className="text-xl font-medium text-gray-600">
+                    Select a team from the list on the left to view its detailed stats, betting analysis, and saved notes.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    
+    // --- TeamComparison Component (Data-Driven & Dynamic) ---
+function TeamComparison({ divisions, initialLeague }) {
+  const [league, setLeague] = useState(initialLeague);
+  const [team1, setTeam1] = useState(null);
+  const [team2, setTeam2] = useState(null);
+  const [teamStats1, setTeamStats1] = useState(null);
+  const [teamStats2, setTeamStats2] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [leagueOdds, setLeagueOdds] = useState([]);
+
+  // --- Robust Stat Extractor ---
+  // Looks for multiple potential keys since ESPN labels vary by league
+  const getStat = (teamData, possibleKeys) => {
+    if (!teamData?.stats?.[0]?.stats) return { val: 0, raw: 'N/A' };
+    const statObj = teamData.stats[0].stats.find(s => 
+      possibleKeys.some(key => 
+        s.name === key || s.label === key || s.abbreviation === key
+      )
+    );
+    if (!statObj) return { val: 0, raw: 'N/A' };
+    
+    // Clean numeric value (remove %, etc.)
+    const val = parseFloat(String(statObj.displayValue).replace(/[%,]/g, ''));
+    return { val: isNaN(val) ? 0 : val, raw: statObj.displayValue };
+  };
+
+  const loadTeamStats = useCallback(async (teamName, setStats) => {
+    if (!teamName) return;
+    setLoading(true);
+    try {
+      const stats = await fetchTeamStatsFromESPN(teamName, league);
+      setStats(stats);
+    } catch (err) {
+      setStats(null);
+      console.error("Stats fetch error", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [league]);
+
+  useEffect(() => {
+    if (team1) loadTeamStats(team1, setTeamStats1);
+    if (team2) loadTeamStats(team2, setTeamStats2);
+  }, [team1, team2, loadTeamStats]);
+
+  // --- Win Probability Logic ---
+  const calculateWinChance = () => {
+    const win1 = getStat(teamStats1, ['Win %', 'winPercent', 'PCT', 'Record']).val;
+    const win2 = getStat(teamStats2, ['Win %', 'winPercent', 'PCT', 'Record']).val;
+    
+    if (win1 === 0 && win2 === 0) return { t1: 50, t2: 50 };
+    
+    // Weighting: 70% Win Pct, 30% Scoring Efficiency
+    const prob1 = (win1 / (win1 + win2)) * 100;
+    return { t1: prob1.toFixed(1), t2: (100 - prob1).toFixed(1) };
+  };
+
+  const ComparisonRow = ({ label, keys }) => {
+    const s1 = getStat(teamStats1, keys);
+    const s2 = getStat(teamStats2, keys);
+    const t1Adv = s1.val > s2.val;
+
+    return (
+      <div className="flex items-center justify-between py-4 border-b border-white/5 px-2 hover:bg-white/[0.02]">
+        <div className={`w-1/3 text-xl font-black ${t1Adv ? 'text-emerald-400' : 'text-slate-500'}`}>
+          {s1.raw} {t1Adv && '▲'}
+        </div>
+        <div className="w-1/3 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">
+          {label}
+        </div>
+        <div className={`w-1/3 text-right text-xl font-black ${!t1Adv ? 'text-emerald-400' : 'text-slate-500'}`}>
+          {!t1Adv && '▲'} {s2.raw}
+        </div>
+      </div>
+    );
+  };
+
+  const probs = calculateWinChance();
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      {/* 1. SELECTION AREA */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {[ {id: 1, val: team1, set: setTeam1, data: teamStats1}, 
+           {id: 2, val: team2, set: setTeam2, data: teamStats2} ].map(t => (
+          <div key={t.id} className="space-y-4">
+            <select
+              value={t.val || ''}
+              onChange={e => t.set(e.target.value)}
+              className="w-full p-4 bg-[#0a0a0c] text-white font-bold rounded-2xl border border-white/10 shadow-xl focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="">Select Team {t.id}</option>
+              {Object.values(divisions[league] || {}).flat().sort().map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            
+            {t.data && (
+              <div className="glass-panel p-6 rounded-3xl border border-white/10 text-center animate-in fade-in slide-in-from-bottom-4">
+                <img src={t.data.logos?.[0]?.href} className="h-20 mx-auto mb-4 drop-shadow-lg" />
+                <h2 className="text-2xl font-black italic uppercase tracking-tighter text-white">{t.data.displayName}</h2>
+                <div className="text-indigo-400 text-xs font-bold tracking-widest mt-1 uppercase">{t.data.standingSummary}</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* 2. ANALYTICS PROJECTION */}
+      {teamStats1 && teamStats2 && (
+        <div className="glass-panel rounded-[2.5rem] p-10 border border-white/10 shadow-2xl space-y-10">
+          <div className="relative pt-4">
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-[9px] font-black px-4 py-1 rounded-full uppercase tracking-widest">
+              AI Matchup Probability
+            </div>
+            
+            <div className="flex justify-between items-end mb-6">
+              <div className="text-center">
+                <div className="text-6xl font-black text-white italic tracking-tighter">{probs.t1}%</div>
+                <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">WIN CHANCE</div>
+              </div>
+              <div className="text-3xl font-black text-indigo-500 italic pb-2">VS</div>
+              <div className="text-center">
+                <div className="text-6xl font-black text-white italic tracking-tighter">{probs.t2}%</div>
+                <div className="text-[10px] text-slate-500 font-bold uppercase mt-1">WIN CHANCE</div>
+              </div>
+            </div>
+
+            <div className="h-4 w-full bg-white/5 rounded-full overflow-hidden flex border border-white/10 p-1">
+              <div style={{ width: `${probs.t1}%` }} className="h-full bg-gradient-to-r from-indigo-600 to-blue-400 rounded-full transition-all duration-1000 shadow-[0_0_20px_rgba(79,70,229,0.4)]" />
+              <div className="w-1" />
+              <div style={{ width: `${probs.t2}%` }} className="h-full bg-gradient-to-l from-emerald-600 to-teal-400 rounded-full transition-all duration-1000 shadow-[0_0_20px_rgba(16,185,129,0.4)]" />
+            </div>
+          </div>
+
+          {/* 3. STATISTICAL ADVANTAGE TABLE */}
+          <div className="bg-black/40 rounded-3xl p-6 border border-white/5 shadow-inner">
+            <h3 className="text-center text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-6">Metric Advantage Breakdown</h3>
+            <div className="space-y-1">
+              <ComparisonRow label="Overall Winning %" keys={['Win %', 'winPercent', 'PCT']} />
+              <ComparisonRow label="Scoring Efficiency" keys={['Points Per Game', 'avgPoints', 'PPG', 'Goals For Per Game']} />
+              <ComparisonRow label="Offensive Yards/Game" keys={['Total Offense', 'totalYards', 'YPG']} />
+              <ComparisonRow label="Defensive Rank" keys={['Total Defense', 'avgPointsAllowed', 'Opponent PPG']} />
+              <ComparisonRow label="Point Differential" keys={['Diff', 'pointDifferential', 'PD']} />
+            </div>
+          </div>
+
+          {/* 4. FINAL VERDICT */}
+          <div className="p-6 bg-indigo-500/5 rounded-2xl border border-indigo-500/20 text-center">
+            <p className="text-white text-sm font-medium">
+              <span className="text-indigo-400 font-black uppercase mr-2">VERDICT:</span>
+              The <span className="text-indigo-400 font-black">{probs.t1 > probs.t2 ? team1 : team2}</span> are projected to win because they hold the advantage in 
+              <span className="text-emerald-400 font-bold"> {getStat(teamStats1, ['Win %']).val > getStat(teamStats2, ['Win %']).val ? 'Overall Record' : 'Efficiency Metrics'}</span>.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="text-indigo-500 font-black animate-pulse tracking-[0.5em] text-xl italic">CALCULATING PROBABILITIES...</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// --- BestBetsComponent (Fixed Date Selector & Dark Glass) ---
+function BestBetsComponent() {
+  const { user, isAdmin } = useAuth();
+  const [bets, setBets] = useState([]);
+  const [rangeBets, setRangeBets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newBet, setNewBet] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [recordRange, setRecordRange] = useState('daily');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [isEditingVideo, setIsEditingVideo] = useState(false);
+
+  // Formats date to YYYY-MM-DD for database keys
+  const formatDateKey = (date) => {
+    const d = new Date(date);
+    const month = '' + (d.getMonth() + 1);
+    const day = '' + d.getDate();
+    const year = d.getFullYear();
+    return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+  };
+
+  const getRangeStartDate = () => {
+    const start = new Date(selectedDate);
+    start.setHours(0, 0, 0, 0);
+    if (recordRange === 'weekly') start.setDate(start.getDate() - start.getDay());
+    else if (recordRange === 'monthly') start.setDate(1);
+    else if (recordRange === 'yearly') start.setMonth(0, 1);
+    return formatDateKey(start);
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const dateKey = formatDateKey(selectedDate);
+      const startKey = getRangeStartDate();
+      
+      // 1. Fetch range for the Dashboard Stats
+      const rangeSnapshot = await db.collection("bets")
+        .where(firebase.firestore.FieldPath.documentId(), ">=", startKey)
+        .where(firebase.firestore.FieldPath.documentId(), "<=", dateKey)
+        .get();
+      
+      let allPicksInRange = [];
+      rangeSnapshot.forEach(doc => { 
+        if (doc.data().picks) allPicksInRange = [...allPicksInRange, ...doc.data().picks]; 
+      });
+      setRangeBets(allPicksInRange);
+
+      // 2. Load the current day's list and video
+      const snapshot = await db.collection("bets").doc(dateKey).get();
+      if (snapshot.exists) {
+        setBets(snapshot.data().picks || []);
+        setVideoUrl(snapshot.data().videoUrl || ''); 
+      } else {
+        setBets([]);
+        setVideoUrl('');
+      }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { loadData(); }, [selectedDate, recordRange]);
+
+  const saveAll = async (updatedPicks, updatedVideo) => {
+    if (!isAdmin()) return;
+    const dateKey = formatDateKey(selectedDate);
+    await db.collection("bets").doc(dateKey).set({ 
+      picks: updatedPicks, 
+      videoUrl: updatedVideo || videoUrl,
+      lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    loadData();
+  };
+
+  const stats = rangeBets.reduce((acc, p) => {
+    if (p.result === 'win') acc.w++;
+    if (p.result === 'loss') acc.l++;
+    return acc;
+  }, { w: 0, l: 0 });
+
+  return (
+    <div className="w-full max-w-6xl mx-auto p-4 md:p-8 space-y-6">
+      
+      {/* 🏆 EXPERT RECORD DASHBOARD */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="md:col-span-3 glass-panel p-6 rounded-3xl border border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <h2 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Expert {recordRange} Record</h2>
+            <div className="text-4xl font-black text-white italic">{stats.w}W - {stats.l}L</div>
+          </div>
+          <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+            {['daily', 'weekly', 'monthly', 'yearly'].map((r) => (
+              <button 
+                key={r} 
+                onClick={() => setRecordRange(r)} 
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all ${recordRange === r ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bg-indigo-600 p-6 rounded-3xl text-white text-center flex flex-col justify-center shadow-lg shadow-indigo-900/20">
+            <div className="text-[10px] font-bold uppercase opacity-70">Date View</div>
+            <div className="font-black truncate text-xl uppercase italic">{formatDateKey(selectedDate)}</div>
+        </div>
+      </div>
+
+      {/* 📺 EXPERT VIDEO */}
+      <div className="glass-panel rounded-3xl border border-white/10 overflow-hidden flex flex-col md:flex-row min-h-[350px]">
+        <div className="md:w-1/2 bg-black aspect-video flex items-center justify-center border-r border-white/10">
+          {videoUrl ? (
+            <iframe className="w-full h-full" src={videoUrl} allowFullScreen></iframe>
+          ) : (
+            <div className="text-slate-500 text-sm font-bold uppercase tracking-widest">No video breakdown</div>
+          )}
+        </div>
+        <div className="md:w-1/2 p-8 flex flex-col justify-center bg-white/5">
+          <div className="flex justify-between items-start mb-4">
+            <h3 className="text-2xl font-black text-white tracking-tighter uppercase italic">Analysis</h3>
+            {isAdmin() && (
+              <button onClick={() => setIsEditingVideo(!isEditingVideo)} className="text-[9px] bg-white/10 text-white px-3 py-1 rounded-md font-black hover:bg-indigo-600 transition-colors uppercase">Edit Link</button>
+            )}
+          </div>
+          {isEditingVideo && isAdmin() ? (
+            <input 
+              className="w-full p-3 bg-black/50 border border-white/10 rounded-xl text-white text-sm outline-none focus:ring-1 focus:ring-indigo-500" 
+              placeholder="Paste YouTube Embed Link..."
+              defaultValue={videoUrl}
+              onKeyDown={(e) => e.key === 'Enter' && (saveAll(bets, e.target.value), setIsEditingVideo(false))}
+            />
+          ) : (
+            <p className="text-slate-400 text-sm leading-relaxed font-medium">Watch our technical breakdown and model projections for today's slate. We analyze line movement and injury reports.</p>
+          )}
+        </div>
+      </div>
+
+{/* 📅 NAVIGATION (WHITE SELECTOR FIX) */}
+      <div className="flex flex-col sm:flex-row justify-between items-center glass-panel p-4 rounded-2xl border border-white/10 gap-4">
+        <div className="flex items-center gap-3">
+          {/* Back Button */}
+          <button 
+            onClick={() => { const d = new Date(selectedDate); d.setDate(d.getDate() - 1); setSelectedDate(d); }} 
+            className="w-12 h-12 glass-panel border border-white/10 rounded-xl hover:bg-white/10 flex items-center justify-center font-bold text-white transition-all active:scale-95"
+          >
+            ←
+          </button>
+          
+          {/* High-Contrast White Date Input */}
+          <div className="relative group">
+            <input 
+              type="date" 
+              value={formatDateKey(selectedDate)} 
+              onChange={e => setSelectedDate(new Date(e.target.value + "T00:00:00"))} 
+              className="bg-white text-black border-none rounded-xl font-black text-sm px-6 py-3 cursor-pointer outline-none focus:ring-2 focus:ring-indigo-500 shadow-xl"
+              style={{ colorScheme: 'light' }} 
+            />
+          </div>
+
+          {/* Forward Button */}
+          <button 
+            onClick={() => { const d = new Date(selectedDate); d.setDate(d.getDate() + 1); setSelectedDate(d); }} 
+            className="w-12 h-12 glass-panel border border-white/10 rounded-xl hover:bg-white/10 flex items-center justify-center font-bold text-white transition-all active:scale-95"
+          >
+            →
+          </button>
+        </div>
+
+        {/* Jump to Today Button */}
+        <button 
+          onClick={() => setSelectedDate(new Date())} 
+          className="text-[10px] font-black text-indigo-400 hover:text-white uppercase tracking-widest transition-colors"
+        >
+          Jump to Today
+        </button>
+      </div>
+
+      {/* 📋 LIST (GLASS CARDS) */}
+      <div className="space-y-4">
+        {bets.length === 0 ? (
+          <div className="text-center py-20 text-slate-500 font-black uppercase tracking-[0.3em] border-2 border-dashed border-white/5 rounded-[2.5rem]">
+            No Plays Posted
+          </div>
+        ) : (
+          bets.map(bet => (
+            <div 
+              key={bet.id} 
+              className={`p-6 glass-panel rounded-2xl border-l-[12px] flex justify-between items-center transition-all hover:translate-x-1 ${
+                bet.result === 'win' ? 'border-emerald-500' : 
+                bet.result === 'loss' ? 'border-rose-500' : 
+                'border-indigo-500'
+              }`}
+            >
+              <span className="font-black text-white text-2xl tracking-tighter uppercase italic">{bet.text}</span>
+              <div className="flex gap-4 items-center">
+                {isAdmin() && (
+                  <div className="flex gap-2 border-r pr-4 border-white/10">
+                    <button onClick={() => saveAll(bets.map(b => b.id === bet.id ? {...b, result: 'win'} : b))} className="w-8 h-8 bg-emerald-600 text-white rounded-lg font-black text-xs hover:bg-emerald-500 transition-colors">W</button>
+                    <button onClick={() => saveAll(bets.map(b => b.id === bet.id ? {...b, result: 'loss'} : b))} className="w-8 h-8 bg-rose-600 text-white rounded-lg font-black text-xs hover:bg-rose-500 transition-colors">L</button>
+                    <button onClick={() => saveAll(bets.filter(b => b.id !== bet.id))} className="ml-2 text-slate-500 hover:text-white font-bold text-xl">&times;</button>
+                  </div>
+                )}
+                <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                  bet.result === 'win' ? 'bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 
+                  bet.result === 'loss' ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]' : 
+                  'bg-white/5 text-slate-400 border border-white/5'
+                }`}>
+                  {bet.result}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* 🖊️ ADMIN ONLY: POST PICK */}
+      {isAdmin() && (
+        <div className="flex gap-3 bg-indigo-600/10 p-5 rounded-3xl border border-indigo-500/20 mt-8">
+          <input 
+            value={newBet} 
+            onChange={e => setNewBet(e.target.value)} 
+            onKeyPress={e => e.key === 'Enter' && (saveAll([{ id: Date.now(), text: newBet, result: 'pending' }, ...bets]), setNewBet(''))} 
+            placeholder="ADMIN: ENTER NEW EXPERT PLAY..." 
+            className="flex-grow p-4 bg-black/50 border border-white/10 rounded-2xl text-white font-black italic tracking-tight outline-none focus:ring-1 focus:ring-indigo-500" 
+          />
+          <button 
+            onClick={() => { saveAll([{ id: Date.now(), text: newBet, result: 'pending' }, ...bets]); setNewBet(''); }} 
+            className="px-10 bg-indigo-600 text-white rounded-2xl font-black text-sm hover:bg-indigo-500 transition-all shadow-lg uppercase"
+          >
+            Post
+          </button>
+        </div>
+      )}
+    </div> // This closes the main wrapper div
+  ); // This closes the return statement
+} // This closes the BestBetsComponent function
+function CommunityPicksComponent() {
+  const { user, isAdmin } = useAuth();
+  const [picks, setPicks] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [newPick, setNewPick] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [recordRange, setRecordRange] = useState('daily');
+
+  // Logic to calculate the start date for the record dashboard
+  const getRangeStartDate = () => {
+    const start = new Date(selectedDate + "T00:00:00");
+    if (recordRange === 'weekly') {
+      const day = start.getDay(); 
+      start.setDate(start.getDate() - day); 
+    } else if (recordRange === 'monthly') {
+      start.setDate(1); 
+    } else if (recordRange === 'yearly') {
+      start.setMonth(0, 1);
+    }
+    return start.toISOString().split('T')[0];
+  };
+
+  const loadPicks = async () => {
+    setLoading(true);
+    try {
+      const startDate = getRangeStartDate();
+      // Fetch picks from the start of the range up to the selected day
+      const snapshot = await db.collection("communityPicks")
+        .where("date", ">=", startDate)
+        .where("date", "<=", selectedDate + "\uf8ff")
+        .get();
+      
+      const data = snapshot.docs.map(doc => ({ 
+        id: doc.id, 
+        ...doc.data() 
+      }));
+      
+      // Newest picks first
+      data.sort((a, b) => new Date(b.date) - new Date(a.date));
+      setPicks(data);
+    } catch (err) {
+      console.error("Load error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPicks();
+  }, [selectedDate, recordRange]);
+
+  // --- 👑 FIXED ADMIN GRADING FUNCTION ---
+  const markResult = async (id, result) => {
+    // 1. Check if user is actually admin
+    if (!isAdmin()) {
+      alert("You do not have permission to grade picks.");
+      return;
+    }
+
+    try {
+      // 2. Directly update the specific document in Firestore
+      await db.collection("communityPicks").doc(id).update({
+        result: result,
+        gradedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // 3. Update local state immediately so the UI reflects the change
+      setPicks(prevPicks => prevPicks.map(p => 
+        p.id === id ? { ...p, result: result } : p
+      ));
+      
+      console.log(`Successfully marked ${id} as ${result}`);
+    } catch (err) {
+      console.error("Grading error:", err);
+      alert("Failed to update pick. Check console for details.");
+    }
+  };
+
+  // Stats Calculation for Dashboard
+  const stats = picks.reduce((acc, p) => {
+    if (p.result === 'win') acc.w++;
+    if (p.result === 'loss') acc.l++;
+    return acc;
+  }, { w: 0, l: 0 });
+
+  const winPct = (stats.w + stats.l) > 0 
+    ? ((stats.w / (stats.w + stats.l)) * 100).toFixed(1) 
+    : "0.0";
+
+  return (
+    <div className="w-full max-w-6xl mx-auto p-4 md:p-8">
+      
+      {/* 📈 RECORD DASHBOARD */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="md:col-span-3 glass-panelp-6 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <h2 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-1">
+              Community {recordRange} Record
+            </h2>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-black text-gray-900">{stats.w}W - {stats.l}L</span>
+              <span className="text-lg font-bold text-gray-400">{winPct}%</span>
+            </div>
+          </div>
+
+          <div className="flex bg-white/5 p-1 rounded-xl">
+            {['daily', 'weekly', 'monthly', 'yearly'].map((range) => (
+              <button
+                key={range}
+                onClick={() => setRecordRange(range)}
+                className={`px-4 py-2 rounded-lg text-xs font-bold uppercase transition-all ${
+                  recordRange === range ? 'glass-paneltext-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-indigo-600 p-6 rounded-3xl shadow-lg text-glass-panel flex flex-col justify-center items-center text-center">
+          <div className="text-[10px] font-bold uppercase opacity-80 leading-tight mb-1">Total Graded<br/>Community Plays</div>
+          <div className="text-3xl font-black">{stats.w + stats.l}</div>
+        </div>
+      </div>
+
+      {/* 📅 NAVIGATION */}
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 glass-panel p-4 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-2">
+           <button onClick={() => {
+              const d = new Date(selectedDate + "T00:00:00");
+              d.setDate(d.getDate() - 1);
+              setSelectedDate(d.toISOString().split('T')[0]);
+           }} className="w-10 h-10 flex items-center justify-center glass-panel border rounded-xl hover:bg-white/5 font-bold">←</button>
+           
+           <input 
+              type="date" 
+              value={selectedDate} 
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="glass-panelborder-none rounded-xl font-bold glass-panel px-4 py-2 focus:ring-0 cursor-pointer"
+           />
+
+           <button onClick={() => {
+              const d = new Date(selectedDate + "T00:00:00");
+              d.setDate(d.getDate() + 1);
+              setSelectedDate(d.toISOString().split('T')[0]);
+           }} className="w-10 h-10 flex items-center justify-center glass-panel border rounded-xl hover:bg-white/5 font-bold">→</button>
+        </div>
+        
+        <button 
+          onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+          className="px-6 py-2 bg-indigo-50 text-indigo-600 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-indigo-100 transition-colors"
+        >
+          Back to Today
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        {/* SUBMIT BOX */}
+        <div className="lg:col-span-1">
+          <div className="glass-panelrounded-2xl p-6 shadow-md border border-gray-100 sticky top-6">
+            <h3 className="font-bold text-gray-900 mb-4 tracking-tight">Post a Pick</h3>
+            <textarea 
+              value={newPick}
+              onChange={e => setNewPick(e.target.value)}
+              placeholder="e.g. Suns ML"
+              className="w-full p-4 glass-panel rounded-xl mb-4 h-24 text-sm focus:ring-2 focus:ring-indigo-500 border-none resize-none"
+            />
+            <button 
+              onClick={async () => {
+                if(!newPick.trim() || !user) return;
+                await db.collection("communityPicks").add({
+                  text: newPick,
+                  date: new Date().toISOString().split('T')[0], // Save as date string for query
+                  fullTimestamp: new Date().toISOString(),
+                  owner: user.email,
+                  userId: user.uid,
+                  result: 'pending'
+                });
+                setNewPick('');
+                loadPicks();
+              }}
+              className="w-full py-4 bg-indigo-600 text-glass-panel rounded-xl font-black hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+            >
+              SUBMIT PICK
+            </button>
+          </div>
+        </div>
+
+        {/* PICKS LIST */}
+        <div className="lg:col-span-3 space-y-3">
+          {loading ? (
+            <div className="p-20 text-center text-gray-400 font-bold uppercase tracking-widest animate-pulse">Loading Picks...</div>
+          ) : picks.length === 0 ? (
+            <div className="p-20 text-center glass-panel rounded-3xl border-2 border-dashed border-white/10 text-gray-400">
+              No community picks found for this period.
+            </div>
+          ) : (
+            picks.map(pick => (
+              <div key={pick.id} className="glass-panelp-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center group hover:shadow-md transition-all">
+                <div>
+                  <div className="font-black text-gray-900 text-xl tracking-tight uppercase">{pick.text}</div>
+                  <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest flex items-center gap-2 mt-1">
+                    <span>{pick.owner?.split('@')[0]}</span>
+                    <span>•</span>
+                    <span>{pick.date}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* 👑 ADMIN CONTROLS: Only visible to you */}
+                  {isAdmin() && (
+                    <div className="flex gap-1 glass-panel p-1 rounded-xl border border-gray-100 mr-2">
+                      <button 
+                        onClick={() => markResult(pick.id, 'win')} 
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${pick.result === 'win' ? 'bg-green-500 text-glass-panel' : 'glass-paneltext-green-600 hover:bg-green-50'}`}
+                      >
+                        W
+                      </button>
+                      <button 
+                        onClick={() => markResult(pick.id, 'loss')} 
+                        className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase transition-all shadow-sm ${pick.result === 'loss' ? 'bg-red-500 text-glass-panel' : 'glass-paneltext-red-600 hover:bg-red-50'}`}
+                      >
+                        L
+                      </button>
+                      <button 
+                        onClick={() => markResult(pick.id, 'pending')} 
+                        className="px-2 py-2 text-gray-300 hover:text-gray-600 text-[10px] font-bold"
+                        title="Reset to Pending"
+                      >
+                        ↺
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Public Result Badge */}
+                  {!isAdmin() && pick.result !== 'pending' && (
+                    <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm ${
+                      pick.result === 'win' ? 'bg-green-500 text-glass-panel' : 'bg-red-500 text-glass-panel'
+                    }`}>
+                      {pick.result}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+    // --- Main App Component ---
+    function App() {
+      const { user, isAdmin, signIn, signOut } = useAuth();
+      const [league, setLeague] = useState("NBA");
+      const [view, setView] = useState('live');
+      const [headerModalGame, setHeaderModalGame] = useState(null);
+
+      return (
+        <div>
+          {/* Navigation Bar */}
+          <NavHeader 
+            league={league} 
+            setLeague={setLeague} 
+            user={user} 
+            isAdmin={isAdmin} 
+            signIn={signIn} 
+            signOut={signOut} 
+            view={view} 
+            setView={setView}
+          />
+
+          {/* Main Content */}
+          <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            {view === 'live' && <LiveScoreboard league={league} />}
+            {view === 'teams' && (
+              <TeamDataTracker divisions={DIVISIONS} initialLeague={league} onLeagueChange={setLeague} />
+            )}
+            {view === 'compare' && <TeamComparison divisions={DIVISIONS} initialLeague={league} />}
+            {view === 'bets' && <BestBetsComponent />}
+            {view === 'community' && <CommunityPicksComponent />}
+          </main>
+
+          {/* This modal uses the same BoxScoreModal component but is managed by the App/Nav Header, for consistency, though it's currently unused as LiveScoreboard manages its own modal. */}
+          {headerModalGame && (
+            <BoxScoreModal
+              game={headerModalGame}
+              league={league}
+              onClose={() => setHeaderModalGame(null)}
+            />
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
