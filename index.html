@@ -523,21 +523,28 @@ body {
     };
 
 // --- NavHeader Component (Dark Glass Updated) ---
-function NavHeader({ league, setLeague, user, isAdmin, signIn, signOut, view, setView }) {
+// --- NavHeader Component (Updated with Toggle) ---
+function NavHeader({ theme, setTheme, league, setLeague, user, isAdmin, signIn, signOut, view, setView }) {
   const LEAGUES = Object.keys(DIVISIONS);
   const VIEWS = ['live', 'teams', 'compare', 'bets', 'community'];
+  const isDark = theme === 'dark';
   
   return (
-    <nav className="glass-panel sticky top-0 z-50 border-b border-white/10 shadow-2xl">
+    <nav className={`sticky top-0 z-50 border-b backdrop-blur-xl transition-colors duration-500 ${
+      isDark ? 'bg-black/20 border-white/10' : 'bg-white/70 border-slate-200 shadow-sm'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
+          
+          {/* Logo */}
           <div className="flex items-center">
             <span className="text-xl font-black italic tracking-tighter">
               <span className="text-indigo-500">PAY-ME</span>
-              <span className="text-white ml-1">DATA</span>
+              <span className={isDark ? "text-white ml-1" : "text-slate-900 ml-1"}>DATA</span>
             </span>
           </div>
           
+          {/* Desktop Nav */}
           <div className="hidden md:flex space-x-2">
             {VIEWS.map(v => (
               <button
@@ -545,8 +552,8 @@ function NavHeader({ league, setLeague, user, isAdmin, signIn, signOut, view, se
                 onClick={() => setView(v)}
                 className={`px-4 py-1.5 text-xs font-bold uppercase tracking-widest rounded-lg transition-all 
                   ${view === v 
-                    ? 'bg-indigo-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)]' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    ? 'bg-indigo-600 text-white shadow-lg' 
+                    : isDark ? 'text-slate-400 hover:bg-white/5 hover:text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-indigo-600'
                   }`}
               >
                 {displayViewName(v)}
@@ -555,29 +562,41 @@ function NavHeader({ league, setLeague, user, isAdmin, signIn, signOut, view, se
           </div>
 
           <div className="flex items-center gap-4">
-            {/* FIXED LEAGUE SELECTOR: Added explicit dark background for options */}
+            
+            {/* 🌓 THE THEME TOGGLE BUTTON */}
+            <button 
+              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              className={`p-2 rounded-xl border transition-all duration-300 ${
+                isDark 
+                  ? 'bg-white/5 border-white/10 text-yellow-400 hover:bg-white/10' 
+                  : 'bg-slate-100 border-slate-200 text-indigo-600 hover:bg-slate-200'
+              }`}
+              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDark ? '☀️' : '🌙'}
+            </button>
+
+            {/* League Selector */}
             <select 
               value={league} 
               onChange={e => setLeague(e.target.value)} 
-              className="bg-[#1a1a1e] text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-white/10 outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              className={`text-xs font-bold px-3 py-1.5 rounded-lg border outline-none transition-colors ${
+                isDark 
+                  ? 'bg-[#1a1a1e] text-white border-white/10 focus:ring-indigo-500' 
+                  : 'bg-white text-slate-900 border-slate-200 focus:ring-indigo-500'
+              }`}
             >
               {LEAGUES.map(l => (
-                <option key={l} value={l} className="bg-slate-900 text-white">
-                  {displayLeagueName(l)}
-                </option>
+                <option key={l} value={l}>{displayLeagueName(l)}</option>
               ))}
             </select>
 
+            {/* Auth Section */}
             <div className="flex items-center gap-2">
               {user ? (
-                <div className="flex items-center gap-3">
-                  <span className="hidden lg:block text-[10px] font-bold text-slate-400 uppercase">
-                    {user.email} {isAdmin() && <span className="text-red-500 ml-1">● ADMIN</span>}
-                  </span>
-                  <button onClick={signOut} className="text-xs font-bold text-red-400 hover:text-red-300 transition">
-                    LOGOUT
-                  </button>
-                </div>
+                <button onClick={signOut} className="text-xs font-bold text-red-400 hover:text-red-300 transition">
+                  LOGOUT
+                </button>
               ) : (
                 <button onClick={signIn} className="px-4 py-1.5 text-xs font-bold bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition shadow-lg">
                   SIGN IN
@@ -589,8 +608,7 @@ function NavHeader({ league, setLeague, user, isAdmin, signIn, signOut, view, se
       </div>
     </nav>
   );
-}
-    // --- BoxScoreModal Component (Dark Glass Updated) ---
+}    // --- BoxScoreModal Component (Dark Glass Updated) ---
     function BoxScoreModal({ game, league, onClose }) {
       const [boxScore, setBoxScore] = React.useState(null);
       const [loading, setLoading] = React.useState(true);
@@ -872,14 +890,22 @@ function LiveScoreboard({ league, db }) {
   const fetchScores = async () => {
     setLoading(true);
     try {
-      const sportMap = { 'NFL': 'football/nfl', 'NHL': 'hockey/nhl', 'NCAAF': 'football/college-football', 'SOCCER': 'soccer/eng.1' };
+      const sportMap = { 
+        'NFL': 'football/nfl', 
+        'NHL': 'hockey/nhl', 
+        'NCAAF': 'football/college-football', 
+        'SOCCER': 'soccer/eng.1' 
+      };
       const sport = sportMap[league] || 'basketball/nba';
       const d = date.toISOString().split('T')[0].replace(/-/g, '');
       const res = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/scoreboard?dates=${d}`);
       const data = await res.json();
       setScores(data);
-    } catch (e) { console.error(e); } 
-    finally { setLoading(false); }
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   React.useEffect(() => { fetchScores(); }, [league, date]);
@@ -922,6 +948,9 @@ function LiveScoreboard({ league, db }) {
             const home = comp.competitors.find(c => c.homeAway === 'home');
             const status = comp.status.type;
             const isLive = status.state === 'in';
+            
+            // ⭐ FEATURE: Extract Leaders ONLY for Live Games
+            const leaders = isLive ? (comp.leaders || []) : [];
 
             return (
               <div 
@@ -961,7 +990,34 @@ function LiveScoreboard({ league, db }) {
                     </div>
                   ))}
                 </div>
+
+                {/* ⭐ FEATURE: Top Performers UI Section (Conditional on Live) */}
+                {isLive && leaders.length > 0 && (
+                  <div className="mt-5 pt-4 border-t border-white/5 space-y-3 relative z-10">
+                    <h4 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Live Top Performers</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                      {leaders.slice(0, 2).map((leaderGroup, lIdx) => {
+                        const topLeader = leaderGroup.leaders?.[0];
+                        return (
+                          <div key={lIdx} className="flex items-center gap-2 bg-white/5 p-1.5 rounded-xl border border-white/5">
+                            <img 
+                              src={topLeader?.athlete?.headshot || 'https://a.espncdn.com/combiner/i?img=/i/headshots/noplayer.png'} 
+                              className="w-6 h-6 rounded-full bg-slate-800"
+                            />
+                            <div className="flex flex-col overflow-hidden">
+                              <span className="text-[9px] font-bold text-white truncate">{topLeader?.athlete?.displayName}</span>
+                              <span className="text-[8px] font-black text-indigo-400 uppercase">
+                                {topLeader?.displayValue} <span className="text-slate-500 text-[7px] font-medium ml-1">{leaderGroup.name}</span>
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
                 
+                {/* Card Footer (Visible on Hover) */}
                 <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
                    <div className="flex flex-col">
                      <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest italic">Smart Match Simulation</p>
@@ -977,121 +1033,18 @@ function LiveScoreboard({ league, db }) {
         </div>
       )}
 
+      {/* BoxScoreModal Overlay */}
       {selectedGame && (
         <BoxScoreModal 
           game={selectedGame} 
           league={league} 
           db={db} 
           onClose={() => setSelectedGame(null)} 
-          apiEngine={PRO_DATA} // Passing the robust engine into the modal
         />
       )}
     </div>
   );
-}    
-  // --- Updated Persistence Helpers ---
-async function loadNotesForLeague(db, league) {
-  // Matches "match /notes/{docId}" in your rules
-  const snapshot = await db.collection("notes").doc(league).get();
-  return snapshot.exists ? snapshot.data() : {};
 }
-
-async function saveNotes(db, league, team, notes) {
-  // Matches "match /notes/{docId}" in your rules
-  const docRef = db.collection("notes").doc(league);
-  await docRef.set({ [team]: notes }, { merge: true });
-}
-
-    // --- Placeholder Data Generators (Real-time but consistent) ---
-    function generateBettingTrends(teamName) {
-      const seed = teamName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      const trends = [
-        `Team is ${seed % 5 + 1}-1 ATS in its last ${seed % 7 + 3} games.`,
-        `The total has gone ${seed % 2 === 0 ? 'OVER' : 'UNDER'} in ${seed % 4 + 2} of the last 5 games.`,
-        `They are ${seed % 3 + 1}-0 SU against teams with a losing record.`,
-        `The home/away team has covered in ${seed % 4 + 2} of the last 6 matchups.`,
-        `Team is 0-4 ATS after a straight-up win. (Fading opportunity)`
-      ];
-      return trends.slice(0, 3 + (seed % 3));
-    }
-
-    function generateTopLeaders(teamStats, teamName, league) {
-      if (!teamStats?.roster?.athletes) return null;
-      const allPlayers = [];
-      teamStats.roster.athletes.forEach(positionGroup => {
-        positionGroup.items?.forEach(player => {
-          allPlayers.push({ ...player, positionGroup: positionGroup.position });
-        });
-      });
-      if (allPlayers.length === 0) return null;
-      const seed = teamName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-      
-      const leaderCandidates = allPlayers.filter(p => p.positionGroup?.includes("Offense") || p.positionGroup?.includes("Forward") || p.positionGroup?.includes("Guard") || p.positionGroup?.includes("Midfielder"));
-      
-      const leaders = [];
-      const usedIndexes = new Set();
-      
-      while(leaders.length < 3 && leaderCandidates.length > leaders.length) {
-        const idx = (seed + leaders.length * 17) % leaderCandidates.length;
-        if (!usedIndexes.has(idx)) {
-          leaders.push(leaderCandidates[idx]);
-          usedIndexes.add(idx);
-        }
-      }
-
-      const generateStat = (player, index) => {
-        const playerSeed = player.fullName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) + seed + index;
-        const random = (min, max) => {
-          const x = Math.sin(playerSeed + min + max) * 10000;
-          return Math.floor((x - Math.floor(x)) * (max - min + 1)) + min;
-        };
-        if (league === 'NHL') {
-          return { label: index === 0 ? 'Points' : index === 1 ? 'Goals' : 'Assists', value: index === 0 ? random(60, 120) : index === 1 ? random(30, 60) : random(40, 80) };
-        } else if (league === 'NFL' || league === 'NCAAF') {
-          const pos = player.position?.abbreviation || 'RB';
-          if (pos === 'QB') return { label: 'Passing Yards', value: random(3000, 5000) };
-          else if (pos === 'RB') return { label: 'Rushing Yards', value: random(800, 1500) };
-          else if (pos === 'WR' || pos === 'TE') return { label: 'Receiving Yards', value: random(900, 1800) };
-          else return { label: 'Tackles', value: random(50, 120) };
-        } else if (league === 'NBA') {
-          return { label: index === 0 ? 'PPG' : index === 1 ? 'RPG' : 'APG', value: index === 0 ? random(15, 35).toFixed(1) : index === 1 ? random(4, 12).toFixed(1) : random(3, 10).toFixed(1) };
-        } else if (league === 'SOCCER') {
-          return { label: index === 0 ? 'Goals' : index === 1 ? 'Assists' : 'Saves', value: index === 0 ? random(10, 30) : index === 1 ? random(5, 20) : random(50, 150) };
-        }
-        return { label: 'Rating', value: random(75, 99).toFixed(1) };
-      };
-
-      return leaders.map((player, index) => ({
-        ...player,
-        stat: generateStat(player, index)
-      }));
-    }
-
-    async function fetchTeamStatsFromESPN(teamName, league) {
-      try {
-        let sport;
-        if (league === 'NHL') sport = 'hockey/nhl';
-        else if (league === 'NFL') sport = 'football/nfl';
-        else if (league === 'NBA') sport = 'basketball/nba';
-        else if (league === 'SOCCER') sport = 'soccer/eng.1';
-        else if (league === 'NCAAF') sport = 'football/college-football';
-        else sport = 'basketball/nba';
-
-        const teamsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/teams`);
-        const teamsData = await teamsRes.json();
-        
-        const team = teamsData.sports?.[0]?.leagues?.[0]?.teams.find(t => fuzzyMatch(teamName, t.team.displayName).match);
-        if (!team) return null;
-
-        const statsRes = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport}/teams/${team.team.id}?enable=roster,stats,records,leaders,notes`);
-        const statsData = await statsRes.json();
-        return statsData.team;
-      } catch (err) {
-        console.error("Error fetching team stats:", err);
-        return null;
-      }
-    }
-
     function generateSmartPick(teamStats, trends) {
       if (!teamStats) return { confidence: 0, factors: ["Failed to load team data."], pick: "N/A" };
       
@@ -2127,16 +2080,39 @@ function CommunityPicksComponent() {
     </div>
   );
 }    // --- Main App Component ---
-    function App() {
+function App() {
       const { user, isAdmin, signIn, signOut } = useAuth();
       const [league, setLeague] = useState("NBA");
       const [view, setView] = useState('live');
       const [headerModalGame, setHeaderModalGame] = useState(null);
 
+      // 🌓 1. THEME STATE: Checks your "memory" (LocalStorage) first, defaults to dark
+      const [theme, setTheme] = useState(() => {
+        return localStorage.getItem('payme-theme') || 'dark';
+      });
+
+      // 💾 2. PERSISTENCE: This ensures the background color of the whole page changes instantly
+      useEffect(() => {
+        localStorage.setItem('payme-theme', theme);
+        // This targets the actual HTML body outside of React for a seamless look
+        document.body.style.backgroundColor = theme === 'dark' ? '#0a0c10' : '#f8fafc';
+      }, [theme]);
+
+      const isDark = theme === 'dark';
+      
+      // 🎨 3. GLOBAL STYLE CLASSES
+      // This wrapper handles the background and text for the entire visible site
+      const themeWrapper = isDark 
+        ? "bg-[#0a0c10] text-white" 
+        : "bg-slate-50 text-slate-900";
+
       return (
-        <div>
-          {/* Navigation Bar */}
+        <div className={`min-h-screen transition-colors duration-500 ${themeWrapper}`}>
+          
+          {/* Navigation Bar - We pass the theme controls here */}
           <NavHeader 
+            theme={theme}
+            setTheme={setTheme}
             league={league} 
             setLeague={setLeague} 
             user={user} 
@@ -2147,22 +2123,42 @@ function CommunityPicksComponent() {
             setView={setView}
           />
 
-          {/* Main Content */}
+          {/* Main Content Area */}
           <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            {view === 'live' && <LiveScoreboard league={league} />}
+            {/* Every sub-component now receives the {theme} prop. 
+                They can use this to change their individual cards from 
+                'bg-white/5' (dark) to 'bg-white shadow-lg' (light).
+            */}
+            {view === 'live' && <LiveScoreboard league={league} theme={theme} />}
+            
             {view === 'teams' && (
-              <TeamDataTracker divisions={DIVISIONS} initialLeague={league} onLeagueChange={setLeague} />
+              <TeamDataTracker 
+                divisions={DIVISIONS} 
+                initialLeague={league} 
+                onLeagueChange={setLeague} 
+                theme={theme} 
+              />
             )}
-            {view === 'compare' && <TeamComparison divisions={DIVISIONS} initialLeague={league} />}
-            {view === 'bets' && <BestBetsComponent />}
-            {view === 'community' && <CommunityPicksComponent />}
+            
+            {view === 'compare' && (
+              <TeamComparison 
+                divisions={DIVISIONS} 
+                initialLeague={league} 
+                theme={theme} 
+              />
+            )}
+            
+            {view === 'bets' && <BestBetsComponent theme={theme} />}
+            
+            {view === 'community' && <CommunityPicksComponent theme={theme} />}
           </main>
 
-          {/* This modal uses the same BoxScoreModal component but is managed by the App/Nav Header, for consistency, though it's currently unused as LiveScoreboard manages its own modal. */}
+          {/* BoxScore Modal - Also receives theme to change its backdrop/text */}
           {headerModalGame && (
             <BoxScoreModal
               game={headerModalGame}
               league={league}
+              theme={theme}
               onClose={() => setHeaderModalGame(null)}
             />
           )}
@@ -2170,7 +2166,7 @@ function CommunityPicksComponent() {
       );
     }
 
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-  </script>
+    // Final Render
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);  </script>
 </body>
 </html>
